@@ -1,0 +1,54 @@
+name: JobVisa CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  readiness:
+    name: Enterprise readiness gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, json, mbstring, zip
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --no-check-publish
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
+
+      # Full HTTP/DB gates need a configured environment.
+      # Structural lint of deployment + testing packages always runs.
+      - name: PHP lint deployment package
+        run: |
+          find app/Domain/Deployment -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l scripts/deploy.php
+          php -l scripts/deployment-check.php
+          php -l config/deployment.php
+
+      - name: PHP lint Testing / RC package
+        run: |
+          find app/Domain/Testing -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l scripts/release-candidate-check.php
+          php -l config/testing.php
+          php -l app/Providers/TestingServiceProvider.php
+
+      - name: PHP lint Enterprise Release package
+        run: |
+          find app/Domain/Release -name '*.php' -print0 | xargs -0 -n1 php -l
+          php -l scripts/enterprise-release-check.php
+          php -l config/release.php
+          php -l app/Providers/ReleaseServiceProvider.php
+          test -f VERSION && grep -qx 'v1.0.0' VERSION
+          test -f CHANGELOG.md && test -f RELEASE_NOTES.md && test -f LICENSE
+
+      - name: Unit regression suite
+        run: vendor/bin/phpunit --testsuite Unit,Security

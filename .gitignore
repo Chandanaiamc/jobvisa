@@ -1,0 +1,13 @@
+.env
+/vendor/
+/storage/logs/*
+/storage/uploads/*
+/composer.phar
+/storage/api/*
+/storage/backups/*
+/storage/cache/*
+/storage/deployments/*
+/storage/framework/*
+/storage/releases/*
+/storage/metrics/*.json
+/composer-setup.php

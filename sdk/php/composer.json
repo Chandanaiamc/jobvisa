@@ -1,0 +1,14 @@
+{
+  "name": "jobvisa/php-sdk",
+  "description": "JobVisa.lk Enterprise API PHP SDK foundation (Sprint 4.6)",
+  "type": "library",
+  "license": "proprietary",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "JobVisa\\Sdk\\": "src/"
+    }
+  }
+}

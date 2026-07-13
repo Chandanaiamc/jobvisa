@@ -1,0 +1,61 @@
+{
+    "name": "jobvisa/jobvisa-lk",
+    "description": "JobVisa.lk Enterprise Platform",
+    "type": "project",
+    "version": "1.0.0",
+    "license": "proprietary",
+
+    "authors":[
+        {
+            "name":"Readleaf (Pvt) Ltd",
+            "role":"Software Development"
+        }
+    ],
+
+    "require":{
+        "php":">=8.2"
+    },
+
+    "require-dev":{
+        "phpunit/phpunit":"^11.0"
+    },
+
+    "autoload":{
+        "psr-4":{
+            "JobVisa\\App\\":"app/",
+            "JobVisa\\Core\\":"bootstrap/"
+        }
+    },
+
+    "autoload-dev":{
+        "psr-4":{
+            "JobVisa\\Tests\\":"tests/"
+        }
+    },
+
+    "scripts":{
+        "test":"vendor/bin/phpunit",
+        "seed":"php database/seed.php",
+        "production-check":"php scripts/production-check.php",
+        "performance-check":"php scripts/performance-check.php",
+        "observability-check":"php scripts/observability-check.php",
+        "deployment-check":"php scripts/deployment-check.php",
+        "deploy":"php scripts/deploy.php --dry-run",
+        "api-check":"php scripts/api-check.php",
+        "api-portal-check":"php scripts/api-portal-check.php",
+        "security-check":"php scripts/security-check.php",
+        "frontend-check":"php scripts/frontend-check.php",
+        "release-candidate-check":"php scripts/release-candidate-check.php",
+        "enterprise-release-check":"php scripts/enterprise-release-check.php",
+        "test:unit":"vendor/bin/phpunit --testsuite Unit,Security",
+        "test:smoke":"vendor/bin/phpunit --testsuite Smoke"
+    },
+    "config":{
+        "sort-packages":true,
+        "preferred-install":"dist",
+        "optimize-autoloader":true
+    },
+
+    "minimum-stability":"stable",
+    "prefer-stable":true
+}

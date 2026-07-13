@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /jobseeker/
+Disallow: /employer/
+Disallow: /api/
+Disallow: /health/
+
+Sitemap: /sitemap.xml

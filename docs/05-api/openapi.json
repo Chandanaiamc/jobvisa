@@ -1,0 +1,187 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "JobVisa.lk Enterprise API",
+    "description": "Versioned JSON API platform (Sprint 4.5). Authenticate with personal access tokens via Authorization: Bearer <token>.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "/api/v1", "description": "API v1" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "PAT",
+        "description": "Personal access token (jv1_…). Raw token is shown only once at creation."
+      }
+    },
+    "schemas": {
+      "SuccessEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "data": { "type": "object" },
+          "meta": { "type": "object" },
+          "request_id": { "type": "string" }
+        }
+      },
+      "ErrorEnvelope": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": { "type": "object" }
+            }
+          },
+          "request_id": { "type": "string" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/portal": {
+      "get": {
+        "summary": "Developer portal readiness",
+        "responses": {
+          "200": { "description": "OK" },
+          "503": { "description": "Degraded" }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "API health",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SuccessEnvelope" },
+                "example": {
+                  "success": true,
+                  "data": { "status": "ok", "api_version": "v1" },
+                  "meta": {},
+                  "request_id": "abc123"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "summary": "List published jobs",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/jobs/{job}": {
+      "get": {
+        "summary": "Get published job",
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/me": {
+      "get": {
+        "summary": "Current authenticated user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" }, "401": { "description": "Unauthorized" } }
+      }
+    },
+    "/resumes": {
+      "get": {
+        "summary": "List own resumes",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/resumes/{resume}": {
+      "get": {
+        "summary": "Get own resume",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "resume", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/resumes/{resume}/intelligence": {
+      "get": {
+        "summary": "Resume intelligence snapshot",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/jobs/{job}/match": {
+      "get": {
+        "summary": "Match resume to job",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } },
+          { "name": "resume_id", "in": "query", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/jobs": {
+      "get": {
+        "summary": "Employer-owned jobs",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" }, "403": { "description": "Forbidden" } }
+      }
+    },
+    "/employer/jobs/{job}/applicants": {
+      "get": {
+        "summary": "Applicants for owned job",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/jobs/{job}/ranking": {
+      "get": {
+        "summary": "Applicant ranking for owned job",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/tokens": {
+      "get": {
+        "summary": "List personal access tokens (metadata only)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      },
+      "post": {
+        "summary": "Create personal access token",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "type": "string", "example": "CI bot" },
+                  "ttl_days": { "type": "integer", "example": 90 }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "Created — plaintext token returned once" } }
+      }
+    }
+  }
+}

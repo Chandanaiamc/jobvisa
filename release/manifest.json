@@ -1,0 +1,67 @@
+{
+    "schema": "jobvisa.release.manifest/v1",
+    "product": "JobVisa.lk",
+    "version": "1.0.0",
+    "tag": "v1.0.0",
+    "released_at": "2026-07-13",
+    "vendor": "Readleaf (Pvt) Ltd",
+    "license": "proprietary",
+    "php_requirement": ">=8.2",
+    "composer_version": "1.0.0",
+    "modules": {
+        "production": "4.1.0",
+        "performance": "4.2.0",
+        "observability": "4.3.0",
+        "deployment": "4.4.0",
+        "api": "4.5.0",
+        "api_portal": "4.6.0",
+        "security": "4.7.0",
+        "frontend": "4.8.0",
+        "testing_rc": "4.9.0",
+        "enterprise_release": "1.0.0"
+    },
+    "gates": [
+        "production-check",
+        "performance-check",
+        "observability-check",
+        "api-check",
+        "api-portal-check",
+        "security-check",
+        "frontend-check",
+        "release-candidate-check",
+        "enterprise-release-check"
+    ],
+    "artifacts": {
+        "VERSION": {
+            "present": true,
+            "sha256": "b1a5a445b5aa7e6e98e0f7318c82256f0e0c4f62270904b918e8c72066bd4890",
+            "bytes": 8
+        },
+        "CHANGELOG.md": {
+            "present": true,
+            "sha256": "cd1e1274ce5cb2cf534175454eb31c6f8543175843d344507d6280c5a32f94a2",
+            "bytes": 2421
+        },
+        "RELEASE_NOTES.md": {
+            "present": true,
+            "sha256": "5f706c8ec152ebb3a3a2d9cfa8e27f049463544c52f8f77b29d80ae91a36c892",
+            "bytes": 2566
+        },
+        "LICENSE": {
+            "present": true,
+            "sha256": "a640e1d9beeb3334d7f8f1aa7ec605f8043b864e41d7ae25639de9ee31f0321f",
+            "bytes": 2439
+        },
+        "release/manifest.json": {
+            "present": true,
+            "sha256": "5c305e90da4a620e43034742a86aa0cfbb33f23d1bda03f0dbbb5cddc671223f",
+            "bytes": 1951
+        },
+        "composer.json": {
+            "present": true,
+            "sha256": "11dab0b37b3cf152a61414874f412b925bfd14c25a5862547a0332bc8dd5f130",
+            "bytes": 1803
+        }
+    },
+    "generated_at": "2026-07-13T03:03:13+00:00"
+}
