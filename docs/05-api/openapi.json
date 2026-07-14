@@ -183,6 +183,13 @@
         "responses": { "201": { "description": "Created — plaintext token returned once" } }
       }
     },
+    "/tokens/revoke-all": {
+      "post": {
+        "summary": "Revoke all personal access tokens for the current user",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
     "/tokens/{token}/revoke": {
       "post": {
         "summary": "Revoke a personal access token",
@@ -200,6 +207,130 @@
           "200": { "description": "Revoked" },
           "404": { "description": "Not found / not owned" }
         }
+      }
+    },
+    "/auth/status": {
+      "get": {
+        "summary": "Auth Token Lifecycle v2 readiness",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Password login → access PAT + refresh token (UTC expiry, device bound)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" },
+                  "device_name": { "type": "string" },
+                  "device_fingerprint": { "type": "string" },
+                  "platform": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Issued access + refresh" },
+          "401": { "description": "Invalid credentials / MFA required" },
+          "429": { "description": "Account lockout" }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Rotate refresh token (family reuse detection)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["refresh_token"],
+                "properties": { "refresh_token": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "New access + refresh" },
+          "401": { "description": "Invalid / reused / expired" }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout current API session",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/logout-everywhere": {
+      "post": {
+        "summary": "Revoke all devices, refresh families, and PATs",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/devices": {
+      "get": {
+        "summary": "List device sessions",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/devices/{device}/revoke": {
+      "post": {
+        "summary": "Revoke a device and its refresh tokens",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "device", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/auth/password/forgot": {
+      "post": {
+        "summary": "Request password reset email",
+        "responses": { "200": { "description": "Always generic success (anti-enumeration)" } }
+      }
+    },
+    "/auth/password/reset": {
+      "post": {
+        "summary": "Reset password with emailed token",
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Validation" } }
+      }
+    },
+    "/auth/email/verify": {
+      "post": {
+        "summary": "Verify email with token",
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Invalid token" } }
+      }
+    },
+    "/auth/email/resend": {
+      "post": {
+        "summary": "Resend email verification",
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/mfa": {
+      "get": {
+        "summary": "MFA-ready factor status",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/auth/mfa/register": {
+      "post": {
+        "summary": "Register MFA factor placeholder (challenge deferred)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "201": { "description": "Created" } }
       }
     },
     "/docs/openapi": {
