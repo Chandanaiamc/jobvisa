@@ -45,6 +45,12 @@ final class ApiRequestValidator
                     }
                     continue;
                 }
+                if ($rule === 'email') {
+                    if (!is_string($value) || filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
+                        $errors[$field][] = 'The ' . $field . ' field must be a valid email address.';
+                    }
+                    continue;
+                }
                 if (str_starts_with($rule, 'min:')) {
                     $min = (int) substr($rule, 4);
                     if (is_numeric($value) && (float) $value < $min) {

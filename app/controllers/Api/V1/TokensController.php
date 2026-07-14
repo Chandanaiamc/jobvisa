@@ -55,6 +55,13 @@ final class TokensController extends ApiController
         $this->ok(['revoked' => true, 'id' => $tokenId], $this->platformMeta());
     }
 
+    public function revokeAll(): void
+    {
+        $userId = (int) ($this->actor()['id'] ?? 0);
+        $n = container(\JobVisa\App\Domain\Auth\Services\LogoutEverywhereService::class)->revokeAllPats($userId);
+        $this->ok(['revoked_count' => $n], $this->platformMeta());
+    }
+
     /**
      * @return array<string, mixed>
      */

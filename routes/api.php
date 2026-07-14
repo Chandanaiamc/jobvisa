@@ -17,7 +17,14 @@ $router->group('api.v1.public', static function ($router): void {
         '/v1/jobs/{job}' => 'Api\\V1\\JobsController@show',
         '/v1/docs/openapi' => 'Api\\V1\\DocsController@openapi',
         '/v1/portal' => 'Api\\V1\\PortalController@index',
+        '/v1/auth/status' => 'Api\\V1\\AuthLifecycleController@status',
     ]);
+    $router->post('/v1/auth/login', 'Api\\V1\\AuthLifecycleController@login');
+    $router->post('/v1/auth/refresh', 'Api\\V1\\AuthLifecycleController@refresh');
+    $router->post('/v1/auth/password/forgot', 'Api\\V1\\AuthLifecycleController@forgotPassword');
+    $router->post('/v1/auth/password/reset', 'Api\\V1\\AuthLifecycleController@resetPassword');
+    $router->post('/v1/auth/email/verify', 'Api\\V1\\AuthLifecycleController@verifyEmail');
+    $router->post('/v1/auth/email/resend', 'Api\\V1\\AuthLifecycleController@resendVerification');
 }, ['middleware' => []]);
 
 // Authenticated v1 — any role (bearer; no CSRF)
@@ -25,8 +32,15 @@ $router->group('api.v1.auth', static function ($router): void {
     $router->gets([
         '/v1/me' => 'Api\\V1\\MeController@show',
         '/v1/tokens' => 'Api\\V1\\TokensController@index',
+        '/v1/auth/devices' => 'Api\\V1\\AuthLifecycleController@devices',
+        '/v1/auth/mfa' => 'Api\\V1\\AuthLifecycleController@mfaStatus',
     ]);
     $router->post('/v1/tokens', 'Api\\V1\\TokensController@store');
+    $router->post('/v1/tokens/revoke-all', 'Api\\V1\\TokensController@revokeAll');
+    $router->post('/v1/auth/logout', 'Api\\V1\\AuthLifecycleController@logout');
+    $router->post('/v1/auth/logout-everywhere', 'Api\\V1\\AuthLifecycleController@logoutEverywhere');
+    $router->post('/v1/auth/devices/{device}/revoke', 'Api\\V1\\AuthLifecycleController@revokeDevice');
+    $router->post('/v1/auth/mfa/register', 'Api\\V1\\AuthLifecycleController@mfaRegister');
 }, ['middleware' => ['api.auth']]);
 
 $router->group('api.v1.tokens.destroy', static function ($router): void {
