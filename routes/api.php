@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * API routes — Sprint 4.5 Enterprise API Platform.
+ * API routes — Sprint 4.5 Enterprise API Platform (+ v1 hardening).
  * Group prefix: /api  → paths below become /api/v1/...
  *
  * @var \JobVisa\App\Routing\RouteRegistrar $router
@@ -20,23 +20,28 @@ $router->group('api.v1.public', static function ($router): void {
     ]);
 }, ['middleware' => []]);
 
-// Authenticated v1 (bearer token; no CSRF)
+// Authenticated v1 — any role (bearer; no CSRF)
 $router->group('api.v1.auth', static function ($router): void {
     $router->gets([
         '/v1/me' => 'Api\\V1\\MeController@show',
-        '/v1/resumes' => 'Api\\V1\\ResumesController@index',
-        '/v1/resumes/{resume}' => 'Api\\V1\\ResumesController@show',
-        '/v1/resumes/{resume}/intelligence' => 'Api\\V1\\ResumesController@intelligence',
-        '/v1/jobs/{job}/match' => 'Api\\V1\\JobMatchController@show',
         '/v1/tokens' => 'Api\\V1\\TokensController@index',
     ]);
     $router->post('/v1/tokens', 'Api\\V1\\TokensController@store');
-    // DELETE via POST revoke for router limitation — also register as GET destroy pattern
 }, ['middleware' => ['api.auth']]);
 
 $router->group('api.v1.tokens.destroy', static function ($router): void {
     $router->post('/v1/tokens/{token}/revoke', 'Api\\V1\\TokensController@destroy');
 }, ['middleware' => ['api.auth']]);
+
+// Job seeker scoped APIs
+$router->group('api.v1.jobseeker', static function ($router): void {
+    $router->gets([
+        '/v1/resumes' => 'Api\\V1\\ResumesController@index',
+        '/v1/resumes/{resume}' => 'Api\\V1\\ResumesController@show',
+        '/v1/resumes/{resume}/intelligence' => 'Api\\V1\\ResumesController@intelligence',
+        '/v1/jobs/{job}/match' => 'Api\\V1\\JobMatchController@show',
+    ]);
+}, ['middleware' => ['api.auth', 'api.jobseeker']]);
 
 // Employer v1
 $router->group('api.v1.employer', static function ($router): void {

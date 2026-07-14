@@ -110,6 +110,8 @@ final class DeveloperPortalService
             ['group' => 'Auth', 'method' => 'GET', 'path' => '/jobs/{job}/match', 'auth' => true, 'summary' => 'Resume↔job match'],
             ['group' => 'Auth', 'method' => 'GET', 'path' => '/tokens', 'auth' => true, 'summary' => 'List tokens'],
             ['group' => 'Auth', 'method' => 'POST', 'path' => '/tokens', 'auth' => true, 'summary' => 'Create token'],
+            ['group' => 'Auth', 'method' => 'POST', 'path' => '/tokens/{token}/revoke', 'auth' => true, 'summary' => 'Revoke token'],
+            ['group' => 'Public', 'method' => 'GET', 'path' => '/docs/openapi', 'auth' => false, 'summary' => 'OpenAPI 3 document (raw JSON; ?envelope=1 wraps)'],
             ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/jobs', 'auth' => true, 'summary' => 'Owned jobs'],
             ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/jobs/{job}/applicants', 'auth' => true, 'summary' => 'Applicants'],
             ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/jobs/{job}/ranking', 'auth' => true, 'summary' => 'Applicant ranking'],

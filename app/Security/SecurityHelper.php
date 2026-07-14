@@ -39,7 +39,12 @@ final class SecurityHelper
         $remote = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
         $trusted = config('production.trusted_proxies', []);
         $trusted = is_array($trusted) ? $trusted : [];
-        $trustForwarded = $trusted === [] || ($remote !== '' && in_array($remote, $trusted, true));
+        $env = strtolower((string) config('app.env', 'local'));
+        $isLocalLike = in_array($env, ['local', 'testing', 'development'], true);
+        // Empty TRUSTED_PROXIES only trusts XFF/CF in local-like envs. Production must set the list.
+        $trustForwarded = $trusted !== []
+            ? ($remote !== '' && in_array($remote, $trusted, true))
+            : $isLocalLike;
 
         $candidates = [];
         if ($trustForwarded) {
