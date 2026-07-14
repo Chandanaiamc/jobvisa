@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace JobVisa\App\Domain\Api\Auth;
 
+use DateTimeImmutable;
+use DateTimeZone;
 use JobVisa\App\Auth\UserRepository;
 use JobVisa\App\Domain\Api\Http\ApiException;
 use JobVisa\App\Security\SecurityHelper;
@@ -44,14 +46,18 @@ final class PersonalAccessTokenService
         $hash = $this->hash($plain);
 
         $ttl = $ttlDays ?? (int) config('api.token_default_ttl_days', 365);
-        $expires = $ttl > 0 ? gmdate('Y-m-d H:i:s', time() + ($ttl * 86400)) : null;
+        $expires = $ttl > 0
+            ? (new DateTimeImmutable('now', new DateTimeZone('UTC')))
+                ->modify('+' . $ttl . ' days')
+                ->format('Y-m-d H:i:s')
+            : null;
 
         $id = $this->tokens->create([
             'user_id' => $userId,
             'name' => $name,
             'token_hash' => $hash,
             'token_prefix' => mb_substr($plain, 0, 12),
-            'abilities' => null,
+            'abilities' => null, // reserved; not enforced in 4.5.x
             'expires_at' => $expires,
         ]);
 
@@ -88,7 +94,7 @@ final class PersonalAccessTokenService
             throw ApiException::tokenRevoked();
         }
 
-        if (!empty($row['expires_at']) && strtotime((string) $row['expires_at']) < time()) {
+        if ($this->isExpired($row['expires_at'] ?? null)) {
             throw ApiException::tokenExpired();
         }
 
@@ -124,10 +130,61 @@ final class PersonalAccessTokenService
         return $this->tokens->listForUser($userId);
     }
 
+    /**
+     * HMAC-SHA256 of the plaintext token. Requires a non-empty APP_KEY outside local/testing.
+     */
     public function hash(string $plainToken): string
     {
-        $pepper = (string) (env('APP_KEY', config('app.name', 'JobVisa.lk')));
+        return hash_hmac('sha256', $plainToken, $this->pepper());
+    }
 
-        return hash_hmac('sha256', $plainToken, $pepper);
+    /**
+     * Compare expires_at as UTC wall-clock (how create() stores it).
+     */
+    public function isExpired(mixed $expiresAt): bool
+    {
+        if ($expiresAt === null || $expiresAt === '') {
+            return false;
+        }
+
+        $raw = trim((string) $expiresAt);
+        $utc = new DateTimeZone('UTC');
+        $parsed = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $raw, $utc);
+        if ($parsed === false) {
+            $parsed = DateTimeImmutable::createFromFormat('Y-m-d H:i:s.u', $raw, $utc);
+        }
+        if ($parsed === false) {
+            try {
+                $parsed = new DateTimeImmutable($raw, $utc);
+            } catch (\Throwable) {
+                return true;
+            }
+        }
+
+        return $parsed->getTimestamp() < time();
+    }
+
+    private function pepper(): string
+    {
+        $pepper = trim((string) env('APP_KEY', ''));
+        if ($pepper === '') {
+            $pepper = trim((string) config('app.key', ''));
+        }
+
+        if ($pepper !== '') {
+            return $pepper;
+        }
+
+        $env = strtolower((string) config('app.env', 'local'));
+        if (in_array($env, ['local', 'testing', 'development'], true)) {
+            // Deterministic local-only fallback so dev bootstraps without APP_KEY.
+            return (string) config('app.name', 'JobVisa.lk') . '|local-dev-only';
+        }
+
+        throw new ApiException(
+            'misconfigured',
+            'APP_KEY is required for API token hashing in this environment.',
+            503
+        );
     }
 }

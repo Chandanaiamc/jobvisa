@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "JobVisa.lk Enterprise API",
-    "description": "Versioned JSON API platform (Sprint 4.5). Authenticate with personal access tokens via Authorization: Bearer <token>.",
+    "description": "Versioned JSON API platform (Sprint 4.5 + hardening). Authenticate with personal access tokens via Authorization: Bearer <token>. Rate-limit headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset; Retry-After on 429. Token expires_at is UTC. Set APP_KEY for PAT hashing. Webhooks remain disabled by default (SSRF hardening pending).",
     "version": "1.0.0"
   },
   "servers": [
@@ -181,6 +181,49 @@
           }
         },
         "responses": { "201": { "description": "Created — plaintext token returned once" } }
+      }
+    },
+    "/tokens/{token}/revoke": {
+      "post": {
+        "summary": "Revoke a personal access token",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" },
+            "description": "Token id (not the plaintext secret)"
+          }
+        ],
+        "responses": {
+          "200": { "description": "Revoked" },
+          "404": { "description": "Not found / not owned" }
+        }
+      }
+    },
+    "/docs/openapi": {
+      "get": {
+        "summary": "OpenAPI 3 document",
+        "description": "Returns raw OpenAPI JSON by default. Pass ?envelope=1 to wrap in the SuccessEnvelope.",
+        "parameters": [
+          {
+            "name": "envelope",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
       }
     }
   }

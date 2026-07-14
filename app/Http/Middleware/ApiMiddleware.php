@@ -37,6 +37,7 @@ final class ApiMiddleware implements MiddlewareInterface
 
         $started = hrtime(true);
         ApiAuth::clear();
+        ApiRateLimiter::beginRequest();
 
         try {
             container(ApiRateLimiter::class)->enforce();
@@ -60,7 +61,9 @@ final class ApiMiddleware implements MiddlewareInterface
         } catch (\Throwable $e) {
             $this->audit($started, 500);
             if (ApiResponse::isApiRequest()) {
-                $debug = (bool) config('app.debug', false);
+                // Never leak internals via API unless explicitly in local+debug.
+                $debug = (bool) config('app.debug', false)
+                    && in_array(strtolower((string) config('app.env', 'local')), ['local', 'testing', 'development'], true);
                 ApiResponse::error(
                     'server_error',
                     $debug ? $e->getMessage() : 'An unexpected error occurred.',
@@ -86,8 +89,8 @@ final class ApiMiddleware implements MiddlewareInterface
             header('Access-Control-Allow-Origin: ' . $origin);
             header('Vary: Origin');
             header('Access-Control-Allow-Credentials: true');
-        } elseif ($allowed === [] && (string) config('app.env', 'local') === 'local') {
-            // Local-only permissive CORS when allow-list empty.
+        } elseif ($allowed === [] && in_array(strtolower((string) config('app.env', 'local')), ['local', 'testing', 'development'], true)) {
+            // Local/dev-only permissive CORS when allow-list empty. Production must set API_CORS_ORIGINS.
             if ($origin !== '') {
                 header('Access-Control-Allow-Origin: ' . $origin);
                 header('Vary: Origin');
