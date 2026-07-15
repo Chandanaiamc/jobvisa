@@ -71,12 +71,37 @@ $check(isset($map['GET']['/api/v1/health']), 'route /api/v1/health');
 $check(isset($map['GET']['/api/v1/jobs']), 'route /api/v1/jobs');
 $check(isset($map['GET']['/api/v1/me']), 'route /api/v1/me');
 $check(isset($map['GET']['/api/v1/employer/jobs']), 'route /api/v1/employer/jobs');
+$check(isset($map['POST']['/api/v1/tokens/{token}/revoke']), 'route POST /api/v1/tokens/{token}/revoke');
+$check(isset($map['GET']['/api/v1/docs/openapi']), 'route /api/v1/docs/openapi');
+$check(isset($map['GET']['/api/v1/resumes']), 'route /api/v1/resumes');
 
-// OpenAPI valid
+// OpenAPI valid + parity with registered /api/v1 routes
 $openapiPath = $root . '/docs/05-api/openapi.json';
 $openapiRaw = is_file($openapiPath) ? file_get_contents($openapiPath) : false;
 $openapi = is_string($openapiRaw) ? json_decode($openapiRaw, true) : null;
 $check(is_array($openapi) && ($openapi['openapi'] ?? '') !== '', 'OpenAPI valid');
+$openPaths = is_array($openapi['paths'] ?? null) ? array_keys($openapi['paths']) : [];
+$check(in_array('/tokens/{token}/revoke', $openPaths, true), 'OpenAPI documents revoke');
+$check(in_array('/docs/openapi', $openPaths, true), 'OpenAPI documents docs');
+
+$registeredV1 = [];
+foreach (['GET', 'POST'] as $method) {
+    foreach (array_keys($map[$method] ?? []) as $uri) {
+        if (str_starts_with((string) $uri, '/api/v1')) {
+            $registeredV1[] = substr((string) $uri, strlen('/api/v1'));
+        }
+    }
+}
+$missingInOpenapi = [];
+foreach ($registeredV1 as $path) {
+    if ($path === '') {
+        continue;
+    }
+    if (!isset($openapi['paths'][$path])) {
+        $missingInOpenapi[] = $path;
+    }
+}
+$check($missingInOpenapi === [], 'OpenAPI paths cover registered routes' . ($missingInOpenapi !== [] ? ' missing:' . implode(',', $missingInOpenapi) : ''));
 
 $dispatch = static function (string $method, string $uri, array $headers = [], array $query = []) use ($app): array {
     foreach (['HTTP_AUTHORIZATION', 'HTTP_X_REQUEST_ID', 'HTTP_ACCEPT', 'HTTP_ORIGIN'] as $h) {
@@ -91,6 +116,7 @@ $dispatch = static function (string $method, string $uri, array $headers = [], a
     $_POST = [];
     http_response_code(200);
     JobVisa\App\Domain\Api\Auth\ApiAuth::clear();
+    JobVisa\App\Domain\Api\RateLimit\ApiRateLimiter::beginRequest();
     ob_start();
     $app->router()->dispatch($method, $uri);
     $body = (string) ob_get_clean();
@@ -109,9 +135,31 @@ $check(($health['json']['request_id'] ?? '') !== '' || str_contains($health['bod
 // JSON content type checked via body parse
 $check($health['json'] !== null, 'JSON content type / parseable');
 
+// Raw OpenAPI docs (default)
+$docs = $dispatch('GET', '/api/v1/docs/openapi');
+$check($docs['status'] === 200, 'docs openapi HTTP 200');
+$check(($docs['json']['openapi'] ?? '') !== '', 'docs openapi raw document');
+$docsEnv = $dispatch('GET', '/api/v1/docs/openapi', [], ['envelope' => '1']);
+$check(($docsEnv['json']['success'] ?? false) === true && isset($docsEnv['json']['data']['openapi']), 'docs openapi envelope mode');
+
 // Unauthorized denied
 $unauth = $dispatch('GET', '/api/v1/me');
 $check(in_array($unauth['status'], [401, 403], true), 'Unauthorized access denied');
+
+// UTC expiry helper
+$check($tokens->isExpired(gmdate('Y-m-d H:i:s', time() - 120)) === true, 'UTC expiry past is expired');
+$check($tokens->isExpired(gmdate('Y-m-d H:i:s', time() + 3600)) === false, 'UTC expiry future is valid');
+$check($tokens->isExpired(null) === false, 'null expiry never expires');
+
+// Rate-limit memo does not stick across beginRequest cycles
+JobVisa\App\Domain\Api\RateLimit\ApiRateLimiter::beginRequest();
+$storeProbe = $container->get(JobVisa\App\Domain\Api\RateLimit\RateLimitStoreInterface::class);
+$probeKey = 'ip:203.0.113.91';
+$a1 = $storeProbe->hit($probeKey, 60);
+JobVisa\App\Domain\Api\RateLimit\ApiRateLimiter::beginRequest();
+$a2 = $storeProbe->hit($probeKey, 60);
+$check(($a2['attempts'] ?? 0) > ($a1['attempts'] ?? 0), 'rate limit store increments across requests');
+unset($_SERVER['REMOTE_ADDR']);
 
 if ($schemaReady) {
     // Resolve a seeker user
@@ -184,7 +232,14 @@ for ($i = 0; $i <= $limit; $i++) {
 }
 $limited = $dispatch('GET', '/api/v1/health');
 $check($limited['status'] === 429, 'Rate limit returns 429');
+$check(($limited['json']['error']['code'] ?? '') === 'rate_limited', '429 error envelope code');
+$check(isset($limited['json']['error']['details']['retry_after']), '429 retry_after metadata');
 unset($_SERVER['REMOTE_ADDR']);
+
+// Webhooks stay disabled by default
+$check((bool) config('api.webhooks_enabled', true) === false, 'webhooks disabled by default');
+
+$check(is_file($root . '/docs/05-api/api-v1-hardening.md'), 'API hardening docs present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';

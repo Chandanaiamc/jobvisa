@@ -22,7 +22,8 @@ final class FileRateLimitStore implements RateLimitStoreInterface
         $path = $this->path($key);
         $fh = @fopen($path, 'c+');
         if ($fh === false) {
-            return ['attempts' => 1, 'reset_at' => time() + max(1, $decaySeconds)];
+            // Fail closed — never under-count when the store is unavailable.
+            throw new \RuntimeException('Rate limit store unavailable.');
         }
         try {
             flock($fh, LOCK_EX);

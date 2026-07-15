@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 use JobVisa\App\Providers\ApiServiceProvider;
 use JobVisa\App\Providers\AppServiceProvider;
+use JobVisa\App\Providers\AuthLifecycleServiceProvider;
 use JobVisa\App\Providers\AuthServiceProvider;
 use JobVisa\App\Providers\CacheServiceProvider;
 use JobVisa\App\Providers\DatabaseServiceProvider;
@@ -38,6 +39,7 @@ return [
     DatabaseServiceProvider::class,
     RepositoryServiceProvider::class,
     AuthServiceProvider::class,
+    AuthLifecycleServiceProvider::class,
     JobSeekerServiceProvider::class,
     EmployerServiceProvider::class,
     ApiServiceProvider::class,

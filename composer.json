@@ -47,6 +47,7 @@
         "frontend-check":"php scripts/frontend-check.php",
         "release-candidate-check":"php scripts/release-candidate-check.php",
         "enterprise-release-check":"php scripts/enterprise-release-check.php",
+        "auth-lifecycle-check":"php scripts/auth-lifecycle-check.php",
         "test:unit":"vendor/bin/phpunit --testsuite Unit,Security",
         "test:smoke":"vendor/bin/phpunit --testsuite Smoke"
     },

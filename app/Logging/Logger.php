@@ -142,6 +142,10 @@ final class Logger
             return '[REDACTED_SESSION]';
         }
 
+        // Scrub bearer PATs / Authorization headers leaked into free-text logs.
+        $value = preg_replace('/\bBearer\s+\S+/i', 'Bearer [REDACTED]', $value) ?? $value;
+        $value = preg_replace('/\bjv1_[A-Fa-f0-9]{16,}\b/', 'jv1_[REDACTED]', $value) ?? $value;
+
         return $value;
     }
 }

@@ -144,7 +144,9 @@ final class ExceptionHandler
 
     private static function renderApi(Throwable $exception): void
     {
-        $debug = (bool) config('app.debug', false);
+        $env = strtolower((string) config('app.env', 'local'));
+        $debug = (bool) config('app.debug', false)
+            && in_array($env, ['local', 'testing', 'development'], true);
         $status = 500;
         $code = 'server_error';
         $message = $debug ? $exception->getMessage() : 'An unexpected error occurred.';

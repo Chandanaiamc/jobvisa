@@ -26,5 +26,6 @@ return [
     'cors_max_age' => max(0, (int) env('API_CORS_MAX_AGE', '86400')),
     'audit_enabled' => filter_var(env('API_AUDIT_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN),
     'webhooks_enabled' => filter_var(env('API_WEBHOOKS_ENABLED', 'false'), FILTER_VALIDATE_BOOLEAN),
+    // Keep false until SSRF / private-IP deny + retry semantics land.
     'docs_enabled' => filter_var(env('API_DOCS_ENABLED', 'true'), FILTER_VALIDATE_BOOLEAN),
 ];
