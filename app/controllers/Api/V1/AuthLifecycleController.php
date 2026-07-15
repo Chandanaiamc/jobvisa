@@ -68,7 +68,7 @@ final class AuthLifecycleController extends ApiController
             container(AuthLifecycleService::class)->logoutCurrent(
                 isset($body['refresh_token']) ? (string) $body['refresh_token'] : null,
                 $userId,
-                ApiAuth::tokenId()
+                ApiAuth::isAccessToken() ? ApiAuth::tokenId() : null
             ),
             $this->platformMeta()
         );

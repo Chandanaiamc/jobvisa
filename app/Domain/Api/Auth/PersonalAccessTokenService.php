@@ -71,7 +71,7 @@ final class PersonalAccessTokenService
     }
 
     /**
-     * Authenticate from Authorization header. Sets ApiAuth on success.
+     * Authenticate from Authorization header (PAT path). Prefer ApiBearerAuthenticator.
      */
     public function authenticateFromRequest(): void
     {
@@ -80,7 +80,14 @@ final class PersonalAccessTokenService
             throw ApiException::unauthorized('Bearer token required.');
         }
 
-        $plain = $m[1];
+        $this->authenticatePlain($m[1], 'pat');
+    }
+
+    /**
+     * Authenticate a plaintext PAT and set ApiAuth.
+     */
+    public function authenticatePlain(string $plain, string $kind = 'pat'): void
+    {
         if (!$this->tokens->ensureSchemaReady()) {
             throw ApiException::unauthorized('API authentication unavailable.');
         }
@@ -114,6 +121,7 @@ final class PersonalAccessTokenService
             'id' => (int) $row['id'],
             'name' => (string) ($row['name'] ?? ''),
             'prefix' => (string) ($row['token_prefix'] ?? ''),
+            'kind' => $kind,
         ]);
     }
 
@@ -123,11 +131,23 @@ final class PersonalAccessTokenService
     }
 
     /**
+     * List long-lived PATs only (excludes legacy Phase-1 access:* row names).
+     *
      * @return list<array<string, mixed>>
      */
     public function listForUser(int $userId): array
     {
-        return $this->tokens->listForUser($userId);
+        $rows = $this->tokens->listForUser($userId);
+        $filtered = [];
+        foreach ($rows as $row) {
+            $name = (string) ($row['name'] ?? '');
+            if (str_starts_with($name, 'access:')) {
+                continue;
+            }
+            $filtered[] = $row;
+        }
+
+        return $filtered;
     }
 
     /**
