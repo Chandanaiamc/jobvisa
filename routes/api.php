@@ -54,7 +54,11 @@ $router->group('api.v1.jobseeker', static function ($router): void {
         '/v1/resumes/{resume}' => 'Api\\V1\\ResumesController@show',
         '/v1/resumes/{resume}/intelligence' => 'Api\\V1\\ResumesController@intelligence',
         '/v1/jobs/{job}/match' => 'Api\\V1\\JobMatchController@show',
+        '/v1/applications' => 'Api\\V1\\ApplicationsController@index',
+        '/v1/applications/{application}' => 'Api\\V1\\ApplicationsController@show',
     ]);
+    $router->post('/v1/jobs/{job}/applications', 'Api\\V1\\ApplicationsController@store');
+    $router->post('/v1/applications/{application}/withdraw', 'Api\\V1\\ApplicationsController@withdraw');
 }, ['middleware' => ['api.auth', 'api.jobseeker']]);
 
 // Employer v1
@@ -64,10 +68,12 @@ $router->group('api.v1.employer', static function ($router): void {
         '/v1/employer/jobs/{job}' => 'Api\\V1\\EmployerJobsController@show',
         '/v1/employer/jobs/{job}/applicants' => 'Api\\V1\\EmployerJobsController@applicants',
         '/v1/employer/jobs/{job}/ranking' => 'Api\\V1\\EmployerJobsController@ranking',
+        '/v1/employer/applications/{application}' => 'Api\\V1\\EmployerApplicationsController@show',
     ]);
     $router->post('/v1/employer/jobs', 'Api\\V1\\EmployerJobsController@store');
     $router->post('/v1/employer/jobs/{job}', 'Api\\V1\\EmployerJobsController@update');
     $router->post('/v1/employer/jobs/{job}/publish', 'Api\\V1\\EmployerJobsController@publish');
     $router->post('/v1/employer/jobs/{job}/unpublish', 'Api\\V1\\EmployerJobsController@unpublish');
     $router->post('/v1/employer/jobs/{job}/archive', 'Api\\V1\\EmployerJobsController@archive');
+    $router->post('/v1/employer/applications/{application}/status', 'Api\\V1\\EmployerApplicationsController@updateStatus');
 }, ['middleware' => ['api.auth', 'api.employer']]);

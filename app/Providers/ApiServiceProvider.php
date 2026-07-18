@@ -19,8 +19,14 @@ use JobVisa\App\Domain\Job\Services\PublicJobsService;
 use JobVisa\App\Domain\Job\Services\EmployerJobsService;
 use JobVisa\App\Domain\Job\Policies\JobPolicy;
 use JobVisa\App\Domain\Job\Validators\JobValidator;
+use JobVisa\App\Domain\Application\Services\ApplicationService;
+use JobVisa\App\Domain\Application\Policies\ApplicationPolicy;
+use JobVisa\App\Domain\Application\Validators\ApplicationValidator;
+use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\ResumeRepositoryInterface;
+use PDO;
 
 /**
  * Enterprise API platform + developer portal bindings (Sprint 4.5 / 4.6).
@@ -50,6 +56,18 @@ final class ApiServiceProvider extends ServiceProvider
                 $c->get(JobRepositoryInterface::class),
                 $c->get(JobPolicy::class),
                 $c->get(JobValidator::class),
+            );
+        });
+        $this->container->singleton(ApplicationPolicy::class, static fn (): ApplicationPolicy => new ApplicationPolicy());
+        $this->container->singleton(ApplicationValidator::class, static fn (): ApplicationValidator => new ApplicationValidator());
+        $this->container->singleton(ApplicationService::class, static function ($c): ApplicationService {
+            return new ApplicationService(
+                $c->get(ApplicationRepositoryInterface::class),
+                $c->get(JobRepositoryInterface::class),
+                $c->get(ResumeRepositoryInterface::class),
+                $c->get(ApplicationPolicy::class),
+                $c->get(ApplicationValidator::class),
+                $c->get(PDO::class),
             );
         });
 

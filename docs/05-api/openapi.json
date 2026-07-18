@@ -141,6 +141,47 @@
         "responses": { "200": { "description": "OK" } }
       }
     },
+    "/jobs/{job}/applications": {
+      "post": {
+        "summary": "Apply to a published job",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "201": { "description": "Created" },
+          "409": { "description": "Already applied" },
+          "422": { "description": "Validation / job not open" }
+        }
+      }
+    },
+    "/applications": {
+      "get": {
+        "summary": "List own applications",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" }, "403": { "description": "Forbidden" } }
+      }
+    },
+    "/applications/{application}": {
+      "get": {
+        "summary": "Get own application",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "application", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/applications/{application}/withdraw": {
+      "post": {
+        "summary": "Withdraw own application (submitted|reviewing only)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "application", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Invalid transition" } }
+      }
+    },
     "/employer/jobs": {
       "get": {
         "summary": "Employer-owned jobs",
@@ -214,6 +255,30 @@
         "summary": "Applicants for owned job",
         "security": [{ "bearerAuth": [] }],
         "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/applications/{application}": {
+      "get": {
+        "summary": "Applicant detail for owned job application",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "application", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/employer/applications/{application}/status": {
+      "post": {
+        "summary": "Update application status (employer)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "application", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not found" },
+          "422": { "description": "Invalid transition" }
+        }
       }
     },
     "/employer/jobs/{job}/ranking": {

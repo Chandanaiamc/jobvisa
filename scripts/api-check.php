@@ -79,7 +79,13 @@ $check(isset($map['POST']['/api/v1/employer/jobs/{job}']), 'route POST /api/v1/e
 $check(isset($map['POST']['/api/v1/employer/jobs/{job}/publish']), 'route POST publish job');
 $check(isset($map['POST']['/api/v1/employer/jobs/{job}/unpublish']), 'route POST unpublish job');
 $check(isset($map['POST']['/api/v1/employer/jobs/{job}/archive']), 'route POST archive job');
+$check(isset($map['GET']['/api/v1/applications']), 'route GET /api/v1/applications');
+$check(isset($map['POST']['/api/v1/jobs/{job}/applications']), 'route POST apply to job');
+$check(isset($map['POST']['/api/v1/applications/{application}/withdraw']), 'route POST withdraw application');
+$check(isset($map['GET']['/api/v1/employer/applications/{application}']), 'route GET employer application');
+$check(isset($map['POST']['/api/v1/employer/applications/{application}/status']), 'route POST employer application status');
 $check($container->get(JobVisa\App\Domain\Job\Services\EmployerJobsService::class) instanceof JobVisa\App\Domain\Job\Services\EmployerJobsService, 'DI EmployerJobsService');
+$check($container->get(JobVisa\App\Domain\Application\Services\ApplicationService::class) instanceof JobVisa\App\Domain\Application\Services\ApplicationService, 'DI ApplicationService');
 $check(isset($map['POST']['/api/v1/tokens/{token}/revoke']), 'route POST /api/v1/tokens/{token}/revoke');
 $check(isset($map['GET']['/api/v1/docs/openapi']), 'route /api/v1/docs/openapi');
 $check(isset($map['GET']['/api/v1/resumes']), 'route /api/v1/resumes');
@@ -263,6 +269,8 @@ $check((bool) config('api.webhooks_enabled', true) === false, 'webhooks disabled
 
 $check(is_file($root . '/docs/05-api/api-v1-hardening.md'), 'API hardening docs present');
 $check(is_file($root . '/docs/05-api/employer-jobs-crud.md'), 'employer jobs CRUD docs present');
+$check(is_file($root . '/docs/05-api/job-applications-phase1.md'), 'job applications phase1 docs present');
+$check(is_file($root . '/database/migrations/067_create_application_status_history.sql'), 'migration 067 history present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';

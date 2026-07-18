@@ -110,19 +110,58 @@ final class ApiResource
     }
 
     /**
+     * Employer-facing applicant row. Email intentionally omitted.
+     *
      * @param  array<string, mixed>  $app
      * @return array<string, mixed>
      */
-    public static function applicant(array $app): array
+    public static function applicant(array $app, bool $detailed = false): array
     {
-        return [
+        $base = [
             'id' => (int) ($app['id'] ?? 0),
+            'job_id' => isset($app['job_id']) ? (int) $app['job_id'] : null,
             'status' => (string) ($app['status'] ?? ''),
             'applied_at' => $app['applied_at'] ?? null,
+            'status_updated_at' => $app['status_updated_at'] ?? null,
             'applicant_name' => (string) ($app['applicant_name'] ?? ''),
+            'resume_id' => isset($app['resume_id']) ? (int) $app['resume_id'] : null,
             'resume_title' => (string) ($app['resume_title'] ?? ''),
             // Intentionally omit email / private contact fields
         ];
+        if ($detailed) {
+            $base['cover_letter'] = isset($app['cover_letter']) ? (string) $app['cover_letter'] : null;
+            $base['employer_notes'] = isset($app['employer_notes']) ? (string) $app['employer_notes'] : null;
+            $base['job_title'] = (string) ($app['job_title'] ?? '');
+        }
+
+        return $base;
+    }
+
+    /**
+     * Seeker-facing application row.
+     *
+     * @param  array<string, mixed>  $app
+     * @return array<string, mixed>
+     */
+    public static function applicationSeeker(array $app, bool $detailed = false): array
+    {
+        $base = [
+            'id' => (int) ($app['id'] ?? 0),
+            'job_id' => isset($app['job_id']) ? (int) $app['job_id'] : null,
+            'job_title' => (string) ($app['job_title'] ?? ''),
+            'job_status' => (string) ($app['job_status'] ?? ''),
+            'status' => (string) ($app['status'] ?? ''),
+            'applied_at' => $app['applied_at'] ?? null,
+            'status_updated_at' => $app['status_updated_at'] ?? null,
+            'resume_id' => isset($app['resume_id']) ? (int) $app['resume_id'] : null,
+            'resume_title' => (string) ($app['resume_title'] ?? ''),
+        ];
+        if ($detailed) {
+            $base['cover_letter'] = isset($app['cover_letter']) ? (string) $app['cover_letter'] : null;
+            $base['country_name'] = (string) ($app['country_name'] ?? '');
+        }
+
+        return $base;
     }
 
     /**

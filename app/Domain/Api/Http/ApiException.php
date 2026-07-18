@@ -37,6 +37,11 @@ final class ApiException extends \RuntimeException
         return new self('not_found', $message, 404);
     }
 
+    public static function conflict(string $message = 'Conflict.', array $details = []): self
+    {
+        return new self('conflict', $message, 409, $details);
+    }
+
     public static function validation(string $message, array $details = []): self
     {
         return new self('validation_error', $message, 422, $details);
