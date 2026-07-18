@@ -29,6 +29,13 @@ final class FrontendPolishService
                 'developers_css' => is_file($assets . '/css/developers.css'),
                 'auth_css' => is_file($assets . '/css/auth.css'),
                 'jobseeker_css' => is_file($assets . '/css/jobseeker.css'),
+                'api_client_js' => is_file($assets . '/js/api-client.js'),
+                'auth_api_js' => is_file($assets . '/js/auth-api.js'),
+            ],
+            'api_auth' => [
+                'enabled' => (bool) config('frontend.api_auth.enabled', true),
+                'access_cookie' => (string) config('frontend.api_auth.access_cookie', 'jobvisa_api_access'),
+                'refresh_cookie' => (string) config('frontend.api_auth.refresh_cookie', 'jobvisa_api_refresh'),
             ],
             'wcag' => [
                 'perceivable' => 'contrast_tokens_shared_focus',

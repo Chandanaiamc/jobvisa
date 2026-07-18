@@ -254,6 +254,8 @@ final class AuthLifecycleApiTest extends ApplicationTestCase
             [$this->container->get(PasswordHasher::class)->hash($password), (int) $seeker['id']]
         );
         $login = $svc->login((string) $seeker['email'], $password, ['fingerprint' => 'cov-logout-' . bin2hex(random_bytes(2))]);
+        $bridged = $svc->issueTokensForUser((int) $seeker['id'], ['fingerprint' => 'cov-bridge-' . bin2hex(random_bytes(2))], 'coverage');
+        $this->assertArrayHasKey('access_token', $bridged);
         $out = $svc->logoutCurrent($login['refresh_token'], (int) $seeker['id'], null);
         $this->assertTrue($out['logged_out']);
     }

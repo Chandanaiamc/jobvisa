@@ -213,6 +213,7 @@ $corpus = '';
 foreach ([
     $root . '/tests/Unit/AuthLifecycle/AuthTokenHasherTest.php',
     $root . '/tests/Api/AuthLifecycleApiTest.php',
+    $root . '/tests/Api/FrontendApiAuthTest.php',
     $root . '/scripts/auth-lifecycle-check.php',
 ] as $src) {
     $corpus .= is_file($src) ? (string) file_get_contents($src) : '';
