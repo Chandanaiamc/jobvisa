@@ -26,10 +26,12 @@ foreach ([
     $root . '/app/Domain/Auth/Support/AuthTokenLifecycleVersion.php',
     $root . '/app/Domain/Auth/Support/AuthTokenHasher.php',
     $root . '/app/Domain/Auth/Services/AuthLifecycleService.php',
+    $root . '/app/Domain/Auth/Services/AccessTokenService.php',
     $root . '/app/Domain/Auth/Services/RefreshTokenService.php',
     $root . '/app/Domain/Auth/Services/DeviceSessionService.php',
     $root . '/app/Domain/Auth/Services/LogoutEverywhereService.php',
     $root . '/app/Domain/Auth/Services/MfaFactorService.php',
+    $root . '/app/Domain/Api/Auth/ApiBearerAuthenticator.php',
     $root . '/app/Providers/AuthLifecycleServiceProvider.php',
     $root . '/config/auth_lifecycle.php',
     $root . '/app/controllers/Api/V1/AuthLifecycleController.php',
@@ -40,7 +42,7 @@ foreach ([
     $check($code === 0, 'php -l ' . basename($file));
 }
 
-$check(JobVisa\App\Domain\Auth\Support\AuthTokenLifecycleVersion::CURRENT === '2.0.0', 'rules 2.0.0');
+$check(JobVisa\App\Domain\Auth\Support\AuthTokenLifecycleVersion::CURRENT === '2.1.0', 'rules 2.1.0');
 $providers = require $root . '/config/providers.php';
 $check(in_array(JobVisa\App\Providers\AuthLifecycleServiceProvider::class, $providers, true), 'AuthLifecycleServiceProvider registered');
 
@@ -51,11 +53,16 @@ $check(($status['status'] ?? '') === 'ok', 'lifecycle status ok');
 $check(($status['enabled'] ?? false) === true, 'lifecycle enabled flag');
 $check(($status['features']['transactional_refresh'] ?? false) === true, 'feature transactional_refresh');
 $check(($status['features']['device_revokes_access'] ?? false) === true, 'feature device_revokes_access');
+$check(($status['features']['access_pat_separation'] ?? false) === true, 'feature access_pat_separation');
+$check(((int) ($status['access_ttl_seconds'] ?? 0)) === 900, 'access ttl default 900');
 $check(($status['schema']['devices'] ?? false) === true, 'schema devices');
 $check(($status['schema']['refresh'] ?? false) === true, 'schema refresh');
+$check(($status['schema']['access'] ?? false) === true, 'schema access');
 $check(($status['schema']['mfa'] ?? false) === true, 'schema mfa');
 $svc->assertEnabled();
 $check(true, 'assertEnabled allows when enabled');
+$check($container->get(JobVisa\App\Domain\Api\Auth\ApiBearerAuthenticator::class) instanceof JobVisa\App\Domain\Api\Auth\ApiBearerAuthenticator, 'DI ApiBearerAuthenticator');
+$check($container->get(JobVisa\App\Domain\Auth\Services\AccessTokenService::class) instanceof JobVisa\App\Domain\Auth\Services\AccessTokenService, 'DI AccessTokenService');
 
 $hasher = $container->get(JobVisa\App\Domain\Auth\Support\AuthTokenHasher::class);
 $check($hasher->isExpiredUtc(gmdate('Y-m-d H:i:s', time() - 10)) === true, 'UTC expiry past');
@@ -139,19 +146,35 @@ if ($seekerId > 0) {
     }
     $access = (string) ($login['json']['data']['access_token'] ?? '');
     $refresh = (string) ($login['json']['data']['refresh_token'] ?? '');
-    $check(str_starts_with($access, 'jv1_') && str_starts_with($refresh, 'jvr1_'), 'token prefixes');
+    $accessPrefix = (string) config('auth_lifecycle.access_prefix', 'jva1_');
+    $check(str_starts_with($access, $accessPrefix) && str_starts_with($refresh, 'jvr1_'), 'token prefixes');
 
     $me = $dispatch('GET', '/api/v1/me', ['HTTP_AUTHORIZATION' => 'Bearer ' . $access]);
     $check($me['status'] === 200, 'access token authenticates /me');
+
+    // PAT remains independent of access sessions
+    $patCreate = $dispatch('POST', '/api/v1/tokens', ['HTTP_AUTHORIZATION' => 'Bearer ' . $access], [
+        'name' => 'CLI Phase2 PAT ' . bin2hex(random_bytes(2)),
+        'ttl_days' => 30,
+    ]);
+    $check($patCreate['status'] === 201 || $patCreate['status'] === 200, 'PAT create via access bearer');
+    $patPlain = (string) ($patCreate['json']['data']['token'] ?? '');
+    $check(str_starts_with($patPlain, 'jv1_'), 'PAT prefix jv1_');
 
     $ref1 = $dispatch('POST', '/api/v1/auth/refresh', [], ['refresh_token' => $refresh]);
     $check($ref1['status'] === 200, 'refresh rotation');
     $refresh2 = (string) ($ref1['json']['data']['refresh_token'] ?? '');
     $access2 = (string) ($ref1['json']['data']['access_token'] ?? '');
+    $check(str_starts_with($access2, $accessPrefix), 'rotated access prefix');
+    $check($access2 !== $access, 'access replaced via refresh only');
 
     // Reuse old refresh → family revoke
     $reuse = $dispatch('POST', '/api/v1/auth/refresh', [], ['refresh_token' => $refresh]);
     $check($reuse['status'] === 401, 'refresh reuse detected');
+
+    // Old access no longer required; PAT still works independently
+    $mePat = $dispatch('GET', '/api/v1/me', ['HTTP_AUTHORIZATION' => 'Bearer ' . $patPlain]);
+    $check($mePat['status'] === 200, 'PAT unaffected by refresh rotation');
 
     // Relogin for remaining checks
     $login2 = $dispatch('POST', '/api/v1/auth/login', [], [
@@ -186,12 +209,16 @@ if ($seekerId > 0) {
     $check(((int) ($revokeDevice['json']['data']['access_revoked'] ?? 0)) >= 1, 'device revoke access_revoked');
     $meAfterDeviceRevoke = $dispatch('GET', '/api/v1/me', ['HTTP_AUTHORIZATION' => 'Bearer ' . $accessDevice]);
     $check($meAfterDeviceRevoke['status'] === 401, 'device access revoked after logout');
+    $mePatAfterDevice = $dispatch('GET', '/api/v1/me', ['HTTP_AUTHORIZATION' => 'Bearer ' . $patPlain]);
+    $check($mePatAfterDevice['status'] === 200, 'PAT unaffected by device logout');
 
     $mfa = $dispatch('GET', '/api/v1/auth/mfa', ['HTTP_AUTHORIZATION' => 'Bearer ' . $access3]);
     $check($mfa['status'] === 200 && ($mfa['json']['data']['mfa_ready'] ?? false) === true, 'mfa ready status');
 
     $logout = $dispatch('POST', '/api/v1/auth/logout', ['HTTP_AUTHORIZATION' => 'Bearer ' . $access3], ['refresh_token' => $refresh3]);
     $check($logout['status'] === 200, 'logout current');
+    $mePatAfterLogout = $dispatch('GET', '/api/v1/me', ['HTTP_AUTHORIZATION' => 'Bearer ' . $patPlain]);
+    $check($mePatAfterLogout['status'] === 200, 'PAT unaffected by session logout');
 
     // Lockout: force failures
     for ($i = 0; $i < 6; $i++) {
@@ -223,6 +250,7 @@ $covered = 0;
 foreach ([
     JobVisa\App\Domain\Auth\Support\AuthTokenHasher::class,
     JobVisa\App\Domain\Auth\Services\AuthLifecycleService::class,
+    JobVisa\App\Domain\Auth\Services\AccessTokenService::class,
     JobVisa\App\Domain\Auth\Services\RefreshTokenService::class,
     JobVisa\App\Domain\Auth\Services\DeviceSessionService::class,
     JobVisa\App\Domain\Auth\Services\LogoutEverywhereService::class,

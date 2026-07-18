@@ -72,6 +72,24 @@ final class ApiAuth
     }
 
     /**
+     * Bearer credential kind: access (session) or pat (personal access token).
+     */
+    public static function tokenKind(): string
+    {
+        return (string) (self::$token['kind'] ?? 'pat');
+    }
+
+    public static function isAccessToken(): bool
+    {
+        return self::tokenKind() === 'access';
+    }
+
+    public static function isPat(): bool
+    {
+        return self::tokenKind() === 'pat';
+    }
+
+    /**
      * Actor payload for existing domain policies/services.
      *
      * @return array<string, mixed>

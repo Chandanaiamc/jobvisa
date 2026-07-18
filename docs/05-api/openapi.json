@@ -14,7 +14,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "PAT",
-        "description": "Personal access token (jv1_…). Raw token is shown only once at creation."
+        "description": "Bearer credential: short-lived session access token (jva1_…) or long-lived personal access token (jv1_…). Refresh tokens (jvr1_…) are not accepted here."
       }
     },
     "schemas": {
@@ -217,7 +217,7 @@
     },
     "/auth/login": {
       "post": {
-        "summary": "Password login → access PAT + refresh token (UTC expiry, device bound)",
+        "summary": "Password login → short-lived access token + refresh (device bound; access not a PAT)",
         "requestBody": {
           "required": true,
           "content": {
@@ -245,7 +245,7 @@
     },
     "/auth/refresh": {
       "post": {
-        "summary": "Rotate refresh token (family reuse detection)",
+        "summary": "Rotate refresh → new access + refresh (old refresh unusable; access never renewed directly)",
         "requestBody": {
           "required": true,
           "content": {

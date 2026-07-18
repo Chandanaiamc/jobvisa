@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace JobVisa\App\Domain\Auth\Services;
 
+use App\Core\Database;
 use JobVisa\App\Auth\AuthManager;
 use JobVisa\App\Auth\EmailVerificationService;
 use JobVisa\App\Auth\PasswordHasher;
 use JobVisa\App\Auth\PasswordResetService;
 use JobVisa\App\Auth\UserRepository;
-use JobVisa\App\Domain\Api\Auth\PersonalAccessTokenService;
 use JobVisa\App\Domain\Api\Http\ApiException;
 use JobVisa\App\Domain\Auth\Support\AuthTokenHasher;
 use JobVisa\App\Domain\Auth\Support\AuthTokenLifecycleVersion;
@@ -17,7 +17,7 @@ use JobVisa\App\Domain\Security\Services\SecurityAuditLogger;
 use JobVisa\App\Security\SecurityHelper;
 
 /**
- * Password login → access PAT + refresh; refresh rotation; password/email API adapters.
+ * Password login → short-lived access + refresh; rotation; password/email API adapters.
  */
 final class AuthLifecycleService
 {
@@ -25,7 +25,7 @@ final class AuthLifecycleService
         private readonly AuthManager $auth,
         private readonly UserRepository $users,
         private readonly PasswordHasher $hasher,
-        private readonly PersonalAccessTokenService $accessTokens,
+        private readonly AccessTokenService $accessTokens,
         private readonly RefreshTokenService $refresh,
         private readonly DeviceSessionService $devices,
         private readonly LogoutEverywhereService $logoutEverywhere,
@@ -49,6 +49,7 @@ final class AuthLifecycleService
             'schema' => [
                 'devices' => $this->devices->ensureSchemaReady(),
                 'refresh' => $this->refresh->ensureSchemaReady(),
+                'access' => $this->accessTokens->ensureSchemaReady(),
                 'mfa' => $this->mfa->ensureSchemaReady(),
             ],
             'features' => [
@@ -66,9 +67,12 @@ final class AuthLifecycleService
                 'app_key_hashing' => true,
                 'transactional_refresh' => true,
                 'device_revokes_access' => true,
+                'access_pat_separation' => true,
             ],
-            'access_ttl_seconds' => (int) config('auth_lifecycle.access_ttl_seconds', 3600),
+            'access_ttl_seconds' => (int) config('auth_lifecycle.access_ttl_seconds', 900),
+            'access_prefix' => (string) config('auth_lifecycle.access_prefix', 'jva1_'),
             'refresh_ttl_days' => (int) config('auth_lifecycle.refresh_ttl_days', 30),
+            'pat_independent' => true,
         ];
     }
 
@@ -155,6 +159,8 @@ final class AuthLifecycleService
     }
 
     /**
+     * Rotate refresh → new access token. Access tokens are never renewed directly.
+     *
      * @return array<string, mixed>
      */
     public function refresh(string $refreshToken): array
@@ -171,24 +177,13 @@ final class AuthLifecycleService
             $this->accessTokens->revoke($userId, (int) $rotated['prior_access_token_id']);
         }
 
-        $ttlSeconds = max(60, (int) config('auth_lifecycle.access_ttl_seconds', 3600));
-        $ttlDays = max(1, (int) ceil($ttlSeconds / 86400));
-        // Prefer sub-day TTL via custom create — PersonalAccessTokenService uses days; store precise UTC via create then update if needed.
-        $access = $this->accessTokens->create(
+        $access = $this->accessTokens->issue(
             $userId,
-            'access:' . ($deviceId ?? 'api'),
-            $ttlDays
+            is_int($deviceId) ? $deviceId : null,
+            'access:' . ($deviceId ?? 'api') . ':refresh'
         );
-        // Short-circuit expires_at to exact UTC seconds for access tokens from login/refresh.
-        $preciseExpiry = $this->tokenHasher->utcPlusSeconds($ttlSeconds);
-        \App\Core\Database::query(
-            'UPDATE `api_personal_access_tokens` SET `expires_at` = :exp WHERE `id` = :id',
-            ['exp' => $preciseExpiry, 'id' => (int) $access['id']]
-        );
-        $access['expires_at'] = $preciseExpiry;
 
-        // Re-bind access id onto new refresh row
-        \App\Core\Database::query(
+        Database::query(
             'UPDATE `auth_refresh_tokens` SET `access_token_id` = :aid WHERE `id` = :id',
             ['aid' => (int) $access['id'], 'id' => (int) $rotated['id']]
         );
@@ -196,7 +191,7 @@ final class AuthLifecycleService
         return [
             'token_type' => 'Bearer',
             'access_token' => $access['token'],
-            'access_expires_at' => $preciseExpiry,
+            'access_expires_at' => $access['expires_at'],
             'refresh_token' => $rotated['refresh_token'],
             'refresh_expires_at' => $rotated['expires_at'],
             'family_id' => $rotated['family_id'],
@@ -231,6 +226,7 @@ final class AuthLifecycleService
     public function logoutEverywhere(int $userId, bool $revokePats = true): array
     {
         $this->assertEnabled();
+
         return $this->logoutEverywhere->revokeAll($userId, $revokePats);
     }
 
@@ -323,8 +319,16 @@ final class AuthLifecycleService
      */
     private function issueSessionBundle(int $userId, array $device, string $reason): array
     {
-        if (!$this->refresh->ensureSchemaReady() || !$this->devices->ensureSchemaReady()) {
-            throw new ApiException('misconfigured', 'Auth lifecycle schema is not installed. Apply migration 065.', 503);
+        if (
+            !$this->refresh->ensureSchemaReady()
+            || !$this->devices->ensureSchemaReady()
+            || !$this->accessTokens->ensureSchemaReady()
+        ) {
+            throw new ApiException(
+                'misconfigured',
+                'Auth lifecycle schema is not installed. Apply migrations 065 and 066.',
+                503
+            );
         }
 
         $deviceRow = $this->devices->touchOrCreate(
@@ -334,15 +338,11 @@ final class AuthLifecycleService
             isset($device['platform']) ? (string) $device['platform'] : null,
         );
 
-        $ttlSeconds = max(60, (int) config('auth_lifecycle.access_ttl_seconds', 3600));
-        $ttlDays = max(1, (int) ceil($ttlSeconds / 86400));
-        $access = $this->accessTokens->create($userId, 'access:' . $deviceRow['id'] . ':' . $reason, $ttlDays);
-        $preciseExpiry = $this->tokenHasher->utcPlusSeconds($ttlSeconds);
-        \App\Core\Database::query(
-            'UPDATE `api_personal_access_tokens` SET `expires_at` = :exp WHERE `id` = :id',
-            ['exp' => $preciseExpiry, 'id' => (int) $access['id']]
+        $access = $this->accessTokens->issue(
+            $userId,
+            (int) $deviceRow['id'],
+            'access:' . $deviceRow['id'] . ':' . $reason
         );
-        $access['expires_at'] = $preciseExpiry;
 
         $familyId = $this->tokenHasher->familyId();
         $refresh = $this->refresh->issue($userId, (int) $deviceRow['id'], $familyId, (int) $access['id']);
@@ -350,7 +350,7 @@ final class AuthLifecycleService
         return [
             'token_type' => 'Bearer',
             'access_token' => $access['token'],
-            'access_expires_at' => $preciseExpiry,
+            'access_expires_at' => $access['expires_at'],
             'refresh_token' => $refresh['refresh_token'],
             'refresh_expires_at' => $refresh['expires_at'],
             'family_id' => $familyId,

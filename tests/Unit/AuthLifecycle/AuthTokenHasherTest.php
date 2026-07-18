@@ -12,7 +12,7 @@ final class AuthTokenHasherTest extends TestCase
 {
     public function testVersionConstant(): void
     {
-        $this->assertSame('2.0.0', AuthTokenLifecycleVersion::CURRENT);
+        $this->assertSame('2.1.0', AuthTokenLifecycleVersion::CURRENT);
     }
 
     public function testHashIsDeterministicAndHex(): void
