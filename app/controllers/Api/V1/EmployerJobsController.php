@@ -7,9 +7,10 @@ namespace App\Controllers\Api\V1;
 use JobVisa\App\Domain\Api\Http\ApiException;
 use JobVisa\App\Domain\Api\Resources\ApiResource;
 use JobVisa\App\Domain\ApplicantRanking\Services\ApplicantRankingService;
+use JobVisa\App\Domain\Application\Exceptions\ApplicationException;
+use JobVisa\App\Domain\Application\Services\ApplicationService;
 use JobVisa\App\Domain\Job\Exceptions\JobException;
 use JobVisa\App\Domain\Job\Services\EmployerJobsService;
-use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 
 final class EmployerJobsController extends ApiController
@@ -70,16 +71,17 @@ final class EmployerJobsController extends ApiController
     public function applicants(string $job): void
     {
         $jobId = $this->positiveId($job);
-        $actor = $this->actor();
-        $userId = (int) ($actor['id'] ?? 0);
-        $owned = container(JobRepositoryInterface::class)->findOwnedByEmployerUser($jobId, $userId);
-        if ($owned === null) {
-            throw ApiException::notFound('Job not found.');
+        try {
+            $data = container(ApplicationService::class)->listForEmployerJob($this->actor(), $jobId, 200);
+            $owned = container(JobRepositoryInterface::class)->findOwnedByEmployerUser(
+                $jobId,
+                (int) ($this->actor()['id'] ?? 0)
+            );
+        } catch (ApplicationException $e) {
+            throw ApiException::notFound($e->getMessage());
         }
-        $apps = container(ApplicationRepositoryInterface::class)->findDetailedByJobId($jobId, 200);
-        $data = array_map(static fn (array $a): array => ApiResource::applicant($a), $apps);
         $this->ok([
-            'job' => ApiResource::jobEmployer($owned, true),
+            'job' => $owned !== null ? ApiResource::jobEmployer($owned, true) : null,
             'applicants' => $data,
         ], array_merge($this->platformMeta(), ['count' => count($data)]));
     }
