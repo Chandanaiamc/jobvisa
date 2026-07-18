@@ -19,10 +19,11 @@ $flashError = SessionManager::getFlash('error');
 $errors = $errors ?? [];
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-app-base="<?= e(rtrim((string) app_url(''), '/')) ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= e(\JobVisa\App\Security\Csrf::token()) ?>">
     <title><?= e($title) ?> | JobVisa.lk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,7 +43,8 @@ $errors = $errors ?? [];
     </main>
 
     <?php require base_path('app/views/auth/partials/footer.php'); ?>
-    <script src="<?= e(asset('js/auth.js')) ?>" defer></script>
+    <script src="<?= e(asset('js/api-client.js')) ?>" defer></script>
+    <script src="<?= e(asset('js/auth-api.js')) ?>" defer></script>
     <script src="<?= e(asset('js/a11y.js')) ?>" defer></script>
 </body>
 </html>

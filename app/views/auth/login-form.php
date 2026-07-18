@@ -19,8 +19,15 @@ $fieldError = static function (array $errors, string $field): string {
     <h1 id="login-heading" class="auth-card__title">Sign in</h1>
     <p class="auth-card__lead">Access your JobVisa.lk account securely.</p>
 
-    <form class="auth-form" method="post" action="<?= e(app_url('/login')) ?>" novalidate>
+    <div class="auth-api-status" data-api-auth-status hidden role="status" aria-live="polite"></div>
+
+    <form class="auth-form" method="post" action="<?= e(app_url('/login')) ?>"
+          data-api-auth-login novalidate>
         <?= csrf_field() ?>
+
+        <?php if (!empty($errors['form'][0])): ?>
+            <p class="auth-form-error" role="alert"><?= e($errors['form'][0]) ?></p>
+        <?php endif; ?>
 
         <div class="form-field <?= empty($errors['email']) ? '' : 'is-invalid' ?>">
             <label for="email">Email address</label>

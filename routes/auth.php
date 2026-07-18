@@ -44,6 +44,21 @@ $router->group('auth_session_post', function ($router): void {
     'middleware' => ['web', 'remember', 'auth', 'csrf'],
 ]);
 
+// —— Frontend API auth bridge (same-origin; httpOnly cookies; CSRF) ——
+$router->group('auth_api_bridge_get', function ($router): void {
+    $router->get('/auth/api/me', 'Auth\\FrontendApiAuthController@me');
+}, [
+    'middleware' => ['web', 'remember'],
+]);
+
+$router->group('auth_api_bridge_post', function ($router): void {
+    $router->post('/auth/api/login', 'Auth\\FrontendApiAuthController@login');
+    $router->post('/auth/api/refresh', 'Auth\\FrontendApiAuthController@refresh');
+    $router->post('/auth/api/logout', 'Auth\\FrontendApiAuthController@logout');
+}, [
+    'middleware' => ['web', 'remember', 'csrf'],
+]);
+
 // —— HTML guest: login / register ——
 $router->group('auth_ui_guest', function ($router): void {
     $router->get('/register', 'Auth\\WebAuthController@showRegister');

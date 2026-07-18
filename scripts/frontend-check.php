@@ -50,6 +50,9 @@ $check(($status['enabled'] ?? false) === true, 'frontend enabled');
 $check(($status['assets']['a11y_css'] ?? false) === true, 'a11y.css present');
 $check(($status['assets']['a11y_js'] ?? false) === true, 'a11y.js present');
 $check(($status['assets']['developers_css'] ?? false) === true, 'developers.css under assets');
+$check(($status['assets']['api_client_js'] ?? false) === true, 'api-client.js present');
+$check(($status['assets']['auth_api_js'] ?? false) === true, 'auth-api.js present');
+$check(($status['api_auth']['enabled'] ?? false) === true, 'frontend api_auth enabled');
 
 $a11yCss = (string) file_get_contents($root . '/public/assets/css/a11y.css');
 $check(str_contains($a11yCss, ':focus-visible'), 'a11y.css focus-visible');
@@ -72,6 +75,19 @@ foreach ($layouts as $name => $path) {
     $check(str_contains($src, "asset('js/a11y.js')"), $name . ' a11y.js');
 }
 
+$authLayout = (string) file_get_contents($root . '/app/views/auth/layout.php');
+$check(str_contains($authLayout, "asset('js/api-client.js')"), 'auth layout api-client.js');
+$check(str_contains($authLayout, "asset('js/auth-api.js')"), 'auth layout auth-api.js');
+$check(str_contains($authLayout, 'csrf-token'), 'auth layout csrf meta');
+
+$loginForm = (string) file_get_contents($root . '/app/views/auth/login-form.php');
+$check(str_contains($loginForm, 'data-api-auth-login'), 'login form api auth hook');
+
+$apiClient = (string) file_get_contents($root . '/public/assets/js/api-client.js');
+$check(str_contains($apiClient, 'auth/api/refresh'), 'api-client refresh path');
+$check(str_contains($apiClient, 'retryOnAuth'), 'api-client 401 retry');
+$check(!str_contains($apiClient, 'localStorage'), 'api-client avoids localStorage');
+
 $skip = (string) file_get_contents($root . '/app/views/partials/skip-link.php');
 $check(str_contains($skip, 'href="#main"'), 'skip link targets #main');
 $check(str_contains($skip, 'Skip to main content'), 'skip link label');
@@ -80,6 +96,18 @@ $check((bool) config('frontend.enabled', false) === true, 'config frontend.enabl
 $check((bool) config('frontend.skip_link', false) === true, 'config frontend.skip_link');
 
 $check(is_file($root . '/docs/02-system-design/enterprise-frontend-accessibility.md'), 'frontend a11y docs present');
+$check(is_file($root . '/docs/05-api/frontend-api-auth-integration.md'), 'frontend api auth docs present');
+
+// Routes for bridge
+$provider = new JobVisa\App\Providers\RouteServiceProvider($container);
+$provider->loadRoutes();
+$map = $container->get(JobVisa\App\Routing\RouteRegistrar::class)->routeMiddlewareMap();
+$check(isset($map['POST']['/auth/api/login']), 'route POST /auth/api/login');
+$check(isset($map['POST']['/auth/api/refresh']), 'route POST /auth/api/refresh');
+$check(isset($map['GET']['/auth/api/me']), 'route GET /auth/api/me');
+$check(isset($map['POST']['/auth/api/logout']), 'route POST /auth/api/logout');
+
+$check($container->get(JobVisa\App\Domain\Frontend\Auth\FrontendApiAuthService::class) instanceof JobVisa\App\Domain\Frontend\Auth\FrontendApiAuthService, 'DI FrontendApiAuthService');
 
 // Preserve prior platforms
 foreach ([

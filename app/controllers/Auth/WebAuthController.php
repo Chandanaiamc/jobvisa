@@ -9,6 +9,7 @@ use JobVisa\App\Auth\AuthManager;
 use JobVisa\App\Auth\DashboardRedirector;
 use JobVisa\App\Auth\RegistrationService;
 use JobVisa\App\Auth\RememberMeCookie;
+use JobVisa\App\Domain\Frontend\Auth\FrontendApiAuthService;
 use JobVisa\App\Security\Csrf;
 use JobVisa\App\Security\SessionManager;
 use JobVisa\App\Security\Validator;
@@ -24,6 +25,7 @@ final class WebAuthController extends Controller
     private RegistrationService $registration;
     private DashboardRedirector $redirector;
     private RememberMeCookie $rememberCookie;
+    private FrontendApiAuthService $frontendApiAuth;
 
     public function __construct()
     {
@@ -32,6 +34,7 @@ final class WebAuthController extends Controller
         $this->registration = container(RegistrationService::class);
         $this->redirector = container(DashboardRedirector::class);
         $this->rememberCookie = container(RememberMeCookie::class);
+        $this->frontendApiAuth = container(FrontendApiAuthService::class);
     }
 
     /**
@@ -193,6 +196,13 @@ final class WebAuthController extends Controller
         SessionManager::flash('success', 'Signed in successfully.');
 
         $user = $this->auth->user();
+        if (is_array($user) && (int) ($user['id'] ?? 0) > 0) {
+            $this->frontendApiAuth->bridgeSessionToApi((int) $user['id'], [
+                'name' => 'Web Session',
+                'fingerprint' => 'web-form-' . substr(hash('sha256', (string) ($_SERVER['HTTP_USER_AGENT'] ?? 'ua')), 0, 16),
+                'platform' => 'web',
+            ]);
+        }
 
         if (is_array($user) && empty($user['email_verified_at'])) {
             redirect(app_url('/email/verify'));
@@ -207,6 +217,7 @@ final class WebAuthController extends Controller
      */
     public function logout(): void
     {
+        $this->frontendApiAuth->clearApiSessionOnWebLogout();
         $this->auth->logout();
         $this->rememberCookie->forget();
         Csrf::rotate();

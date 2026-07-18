@@ -300,6 +300,20 @@ final class AuthLifecycleService
     }
 
     /**
+     * Mint access + refresh for an already-authenticated user (web session bridge).
+     * Does not re-check password or login attempt counters.
+     *
+     * @param  array<string, mixed>  $device
+     * @return array<string, mixed>
+     */
+    public function issueTokensForUser(int $userId, array $device = [], string $reason = 'web_bridge'): array
+    {
+        $this->assertEnabled();
+
+        return $this->issueSessionBundle($userId, $device, $reason);
+    }
+
+    /**
      * @param  array<string, mixed>  $device
      * @return array<string, mixed>
      */
