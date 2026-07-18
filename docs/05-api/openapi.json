@@ -77,16 +77,22 @@
     },
     "/jobs": {
       "get": {
-        "summary": "List published jobs",
+        "summary": "List published jobs (search, filters, pagination)",
         "parameters": [
-          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } }
+          { "name": "q", "in": "query", "schema": { "type": "string", "maxLength": 120 } },
+          { "name": "country_id", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "job_type_id", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "minimum": 1 } },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } },
+          { "name": "limit", "in": "query", "description": "Legacy alias for per_page", "schema": { "type": "integer", "minimum": 1, "maximum": 100 } },
+          { "name": "include_filters", "in": "query", "schema": { "type": "string", "enum": ["1", "true"] } }
         ],
         "responses": { "200": { "description": "OK" } }
       }
     },
     "/jobs/{job}": {
       "get": {
-        "summary": "Get published job",
+        "summary": "Get published job (detailed public payload)",
         "parameters": [
           { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
         ],

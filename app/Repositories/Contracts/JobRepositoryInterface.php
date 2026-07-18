@@ -20,6 +20,27 @@ interface JobRepositoryInterface extends RepositoryInterface
     public function findPublished(int $limit = 50): array;
 
     /**
+     * Search published jobs with filters and pagination.
+     *
+     * @param  array{
+     *   q?: string,
+     *   country_id?: int,
+     *   job_type_id?: int,
+     *   page?: int,
+     *   per_page?: int
+     * }  $filters
+     * @return array{jobs: list<array<string, mixed>>, total: int, page: int, per_page: int}
+     */
+    public function searchPublished(array $filters = []): array;
+
+    /**
+     * Active job types for public filter dropdowns.
+     *
+     * @return list<array{id: int, name: string, slug: string}>
+     */
+    public function listActiveJobTypes(): array;
+
+    /**
      * Published job with location / type labels for matching.
      *
      * @return array<string, mixed>|null

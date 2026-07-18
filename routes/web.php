@@ -15,3 +15,4 @@ $router->gets([
     '/jobs' => 'PagesController@jobs',
     '/companies' => 'PagesController@companies',
 ]);
+$router->get('/jobs/{job}', 'PagesController@jobShow');

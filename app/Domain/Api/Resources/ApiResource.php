@@ -25,23 +25,47 @@ final class ApiResource
     }
 
     /**
+     * Public job card / detail. Additive fields; `summary` remains for older clients.
+     *
      * @param  array<string, mixed>  $job
      * @return array<string, mixed>
      */
-    public static function jobPublic(array $job): array
+    public static function jobPublic(array $job, bool $detailed = false): array
     {
-        return [
+        $description = (string) ($job['description'] ?? '');
+        $summarySource = (string) ($job['summary'] ?? $description);
+        $summary = $summarySource !== '' ? mb_substr(trim(strip_tags($summarySource)), 0, 500) : null;
+
+        $base = [
             'id' => (int) ($job['id'] ?? 0),
             'title' => (string) ($job['title'] ?? ''),
             'slug' => (string) ($job['slug'] ?? ''),
             'status' => (string) ($job['status'] ?? ''),
+            'country_id' => isset($job['country_id']) ? (int) $job['country_id'] : null,
             'country_name' => (string) ($job['country_name'] ?? ''),
+            'job_type_id' => isset($job['job_type_id']) ? (int) $job['job_type_id'] : null,
             'job_type_name' => (string) ($job['job_type_name'] ?? ''),
             'job_type_slug' => (string) ($job['job_type_slug'] ?? ''),
             'experience_min_years' => isset($job['experience_min_years']) ? (int) $job['experience_min_years'] : null,
+            'visa_sponsorship' => (bool) ($job['visa_sponsorship'] ?? false),
+            'salary_min' => isset($job['salary_min']) ? (float) $job['salary_min'] : null,
+            'salary_max' => isset($job['salary_max']) ? (float) $job['salary_max'] : null,
+            'salary_currency' => isset($job['salary_currency']) ? (string) $job['salary_currency'] : null,
+            'salary_period' => isset($job['salary_period']) ? (string) $job['salary_period'] : null,
+            'application_deadline' => $job['application_deadline'] ?? null,
             'published_at' => $job['published_at'] ?? null,
-            'summary' => isset($job['summary']) ? mb_substr((string) $job['summary'], 0, 500) : null,
+            'summary' => $summary,
         ];
+
+        if ($detailed) {
+            $base['description'] = $description;
+            $base['requirements'] = isset($job['requirements']) ? (string) $job['requirements'] : null;
+            $base['benefits'] = isset($job['benefits']) ? (string) $job['benefits'] : null;
+            $base['vacancies'] = isset($job['vacancies']) ? (int) $job['vacancies'] : null;
+            $base['education_level'] = isset($job['education_level']) ? (string) $job['education_level'] : null;
+        }
+
+        return $base;
     }
 
     /**

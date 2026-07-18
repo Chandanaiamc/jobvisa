@@ -52,6 +52,8 @@ $check(($status['assets']['a11y_js'] ?? false) === true, 'a11y.js present');
 $check(($status['assets']['developers_css'] ?? false) === true, 'developers.css under assets');
 $check(($status['assets']['api_client_js'] ?? false) === true, 'api-client.js present');
 $check(($status['assets']['auth_api_js'] ?? false) === true, 'auth-api.js present');
+$check(is_file($root . '/public/assets/js/jobs-api.js'), 'jobs-api.js present');
+$check(is_file($root . '/public/assets/css/public.css'), 'public.css present');
 $check(($status['api_auth']['enabled'] ?? false) === true, 'frontend api_auth enabled');
 
 $a11yCss = (string) file_get_contents($root . '/public/assets/css/a11y.css');
@@ -97,6 +99,17 @@ $check((bool) config('frontend.skip_link', false) === true, 'config frontend.ski
 
 $check(is_file($root . '/docs/02-system-design/enterprise-frontend-accessibility.md'), 'frontend a11y docs present');
 $check(is_file($root . '/docs/05-api/frontend-api-auth-integration.md'), 'frontend api auth docs present');
+$check(is_file($root . '/docs/05-api/frontend-api-jobs-integration.md'), 'frontend api jobs docs present');
+
+$publicLayout = (string) file_get_contents($root . '/app/views/layouts/public.php');
+$check(str_contains($publicLayout, 'partials/skip-link.php'), 'public layout skip-link');
+$check(str_contains($publicLayout, 'id="main"'), 'public layout #main landmark');
+$check(str_contains($publicLayout, "asset('js/jobs-api.js')"), 'public layout jobs-api.js');
+$check(str_contains($publicLayout, "asset('css/public.css')"), 'public layout public.css');
+
+$jobsApiJs = (string) file_get_contents($root . '/public/assets/js/jobs-api.js');
+$check(str_contains($jobsApiJs, '/api/v1/jobs'), 'jobs-api.js hits public jobs API');
+$check(str_contains($jobsApiJs, 'data-jobs-filters'), 'jobs-api.js binds filter form');
 
 // Routes for bridge
 $provider = new JobVisa\App\Providers\RouteServiceProvider($container);
