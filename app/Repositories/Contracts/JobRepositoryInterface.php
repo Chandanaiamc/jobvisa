@@ -58,4 +58,31 @@ interface JobRepositoryInterface extends RepositoryInterface
      * @return list<array<string, mixed>>
      */
     public function listOwnedByEmployerUser(int $employerUserId, int $limit = 50): array;
+
+    /**
+     * Employer profile row for a user (`employers.id`, `company_id`).
+     *
+     * @return array{id: int, company_id: int, user_id: int}|null
+     */
+    public function findEmployerProfileByUserId(int $userId): ?array;
+
+    public function slugExists(string $slug, ?int $exceptJobId = null): bool;
+
+    public function jobCategoryExists(int $id): bool;
+
+    public function jobTypeExists(int $id): bool;
+
+    public function countryExists(int $id): bool;
+
+    public function cityExists(int $id): bool;
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function insertJob(array $data): int;
+
+    /**
+     * @param  array<string, mixed>  $fields
+     */
+    public function updateJobById(int $jobId, array $fields): bool;
 }

@@ -146,6 +146,67 @@
         "summary": "Employer-owned jobs",
         "security": [{ "bearerAuth": [] }],
         "responses": { "200": { "description": "OK" }, "403": { "description": "Forbidden" } }
+      },
+      "post": {
+        "summary": "Create employer job (draft or published)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Created" },
+          "403": { "description": "Forbidden" },
+          "422": { "description": "Validation error" }
+        }
+      }
+    },
+    "/employer/jobs/{job}": {
+      "get": {
+        "summary": "Get owned job (detailed)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      },
+      "post": {
+        "summary": "Update owned job",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "OK" },
+          "404": { "description": "Not found" },
+          "422": { "description": "Validation error" }
+        }
+      }
+    },
+    "/employer/jobs/{job}/publish": {
+      "post": {
+        "summary": "Publish owned job (self-publish)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/employer/jobs/{job}/unpublish": {
+      "post": {
+        "summary": "Unpublish owned job (status → draft)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/employer/jobs/{job}/archive": {
+      "post": {
+        "summary": "Archive owned job (status → closed, soft archive)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "job", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
       }
     },
     "/employer/jobs/{job}/applicants": {

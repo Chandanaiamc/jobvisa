@@ -252,4 +252,183 @@ final class JobRepository extends BaseRepository implements
 
         return $this->rowExists($id);
     }
+
+    /**
+     * @return array{id: int, company_id: int, user_id: int}|null
+     */
+    public function findEmployerProfileByUserId(int $userId): ?array
+    {
+        if ($userId < 1) {
+            return null;
+        }
+
+        $row = $this->fetchOne(
+            'SELECT `id`, `company_id`, `user_id` FROM `employers` WHERE `user_id` = :user_id LIMIT 1',
+            ['user_id' => $userId]
+        );
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) ($row['id'] ?? 0),
+            'company_id' => (int) ($row['company_id'] ?? 0),
+            'user_id' => (int) ($row['user_id'] ?? 0),
+        ];
+    }
+
+    public function slugExists(string $slug, ?int $exceptJobId = null): bool
+    {
+        $slug = trim($slug);
+        if ($slug === '') {
+            return false;
+        }
+        if ($exceptJobId !== null && $exceptJobId > 0) {
+            $row = $this->fetchOne(
+                'SELECT `id` FROM `jobs` WHERE `slug` = :slug AND `id` <> :id LIMIT 1',
+                ['slug' => $slug, 'id' => $exceptJobId]
+            );
+        } else {
+            $row = $this->fetchOne(
+                'SELECT `id` FROM `jobs` WHERE `slug` = :slug LIMIT 1',
+                ['slug' => $slug]
+            );
+        }
+
+        return $row !== null;
+    }
+
+    public function jobCategoryExists(int $id): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        return $this->fetchOne(
+            'SELECT `id` FROM `job_categories` WHERE `id` = :id AND `is_active` = 1 LIMIT 1',
+            ['id' => $id]
+        ) !== null;
+    }
+
+    public function jobTypeExists(int $id): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        return $this->fetchOne(
+            'SELECT `id` FROM `job_types` WHERE `id` = :id AND `is_active` = 1 LIMIT 1',
+            ['id' => $id]
+        ) !== null;
+    }
+
+    public function countryExists(int $id): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        return $this->fetchOne(
+            'SELECT `id` FROM `countries` WHERE `id` = :id LIMIT 1',
+            ['id' => $id]
+        ) !== null;
+    }
+
+    public function cityExists(int $id): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        return $this->fetchOne(
+            'SELECT `id` FROM `cities` WHERE `id` = :id LIMIT 1',
+            ['id' => $id]
+        ) !== null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function insertJob(array $data): int
+    {
+        $this->query(
+            'INSERT INTO `jobs`
+                (`employer_id`, `company_id`, `category_id`, `job_type_id`, `posted_by_user_id`,
+                 `title`, `slug`, `description`, `requirements`, `benefits`,
+                 `country_id`, `city_id`, `vacancies`, `salary_min`, `salary_max`,
+                 `salary_currency`, `salary_period`, `experience_min_years`, `education_level`,
+                 `visa_sponsorship`, `application_deadline`, `status`, `published_at`, `closes_at`)
+             VALUES
+                (:employer_id, :company_id, :category_id, :job_type_id, :posted_by_user_id,
+                 :title, :slug, :description, :requirements, :benefits,
+                 :country_id, :city_id, :vacancies, :salary_min, :salary_max,
+                 :salary_currency, :salary_period, :experience_min_years, :education_level,
+                 :visa_sponsorship, :application_deadline, :status, :published_at, :closes_at)',
+            [
+                'employer_id' => (int) ($data['employer_id'] ?? 0),
+                'company_id' => (int) ($data['company_id'] ?? 0),
+                'category_id' => (int) ($data['category_id'] ?? 0),
+                'job_type_id' => (int) ($data['job_type_id'] ?? 0),
+                'posted_by_user_id' => (int) ($data['posted_by_user_id'] ?? 0),
+                'title' => (string) ($data['title'] ?? ''),
+                'slug' => (string) ($data['slug'] ?? ''),
+                'description' => (string) ($data['description'] ?? ''),
+                'requirements' => $data['requirements'] ?? null,
+                'benefits' => $data['benefits'] ?? null,
+                'country_id' => (int) ($data['country_id'] ?? 0),
+                'city_id' => $data['city_id'] ?? null,
+                'vacancies' => (int) ($data['vacancies'] ?? 1),
+                'salary_min' => $data['salary_min'] ?? null,
+                'salary_max' => $data['salary_max'] ?? null,
+                'salary_currency' => $data['salary_currency'] ?? null,
+                'salary_period' => $data['salary_period'] ?? null,
+                'experience_min_years' => $data['experience_min_years'] ?? null,
+                'education_level' => $data['education_level'] ?? null,
+                'visa_sponsorship' => (int) ($data['visa_sponsorship'] ?? 0),
+                'application_deadline' => $data['application_deadline'] ?? null,
+                'status' => (string) ($data['status'] ?? 'draft'),
+                'published_at' => $data['published_at'] ?? null,
+                'closes_at' => $data['closes_at'] ?? null,
+            ]
+        );
+
+        return (int) $this->pdo->lastInsertId();
+    }
+
+    /**
+     * @param  array<string, mixed>  $fields
+     */
+    public function updateJobById(int $jobId, array $fields): bool
+    {
+        if ($jobId < 1 || $fields === []) {
+            return false;
+        }
+
+        $allowed = [
+            'title', 'slug', 'description', 'requirements', 'benefits',
+            'category_id', 'job_type_id', 'country_id', 'city_id', 'vacancies',
+            'salary_min', 'salary_max', 'salary_currency', 'salary_period',
+            'experience_min_years', 'education_level', 'visa_sponsorship',
+            'application_deadline', 'status', 'published_at', 'closes_at',
+        ];
+        $sets = [];
+        $params = ['id' => $jobId];
+        foreach ($allowed as $col) {
+            if (!array_key_exists($col, $fields)) {
+                continue;
+            }
+            $sets[] = '`' . $col . '` = :' . $col;
+            $params[$col] = $fields[$col];
+        }
+        if ($sets === []) {
+            return false;
+        }
+
+        $this->query(
+            'UPDATE `jobs` SET ' . implode(', ', $sets) . ' WHERE `id` = :id',
+            $params
+        );
+
+        return true;
+    }
 }

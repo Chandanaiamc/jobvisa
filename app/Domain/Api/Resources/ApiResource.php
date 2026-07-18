@@ -69,13 +69,26 @@ final class ApiResource
     }
 
     /**
+     * Employer-owned job payload. Additive vs public; includes status and optional detail fields.
+     *
      * @param  array<string, mixed>  $job
      * @return array<string, mixed>
      */
-    public static function jobEmployer(array $job): array
+    public static function jobEmployer(array $job, bool $detailed = false): array
     {
-        $base = self::jobPublic($job);
+        $base = self::jobPublic($job, $detailed);
         $base['status'] = (string) ($job['status'] ?? '');
+        $base['applications_count'] = isset($job['applications_count']) ? (int) $job['applications_count'] : null;
+        $base['closes_at'] = $job['closes_at'] ?? null;
+        $base['category_id'] = isset($job['category_id']) ? (int) $job['category_id'] : null;
+        $base['company_id'] = isset($job['company_id']) ? (int) $job['company_id'] : null;
+        $base['employer_id'] = isset($job['employer_id']) ? (int) $job['employer_id'] : null;
+        if ($detailed) {
+            $base['city_id'] = isset($job['city_id']) ? (int) $job['city_id'] : null;
+            $base['views_count'] = isset($job['views_count']) ? (int) $job['views_count'] : null;
+            $base['updated_at'] = $job['updated_at'] ?? null;
+            $base['created_at'] = $job['created_at'] ?? null;
+        }
 
         return $base;
     }

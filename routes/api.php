@@ -61,7 +61,13 @@ $router->group('api.v1.jobseeker', static function ($router): void {
 $router->group('api.v1.employer', static function ($router): void {
     $router->gets([
         '/v1/employer/jobs' => 'Api\\V1\\EmployerJobsController@index',
+        '/v1/employer/jobs/{job}' => 'Api\\V1\\EmployerJobsController@show',
         '/v1/employer/jobs/{job}/applicants' => 'Api\\V1\\EmployerJobsController@applicants',
         '/v1/employer/jobs/{job}/ranking' => 'Api\\V1\\EmployerJobsController@ranking',
     ]);
+    $router->post('/v1/employer/jobs', 'Api\\V1\\EmployerJobsController@store');
+    $router->post('/v1/employer/jobs/{job}', 'Api\\V1\\EmployerJobsController@update');
+    $router->post('/v1/employer/jobs/{job}/publish', 'Api\\V1\\EmployerJobsController@publish');
+    $router->post('/v1/employer/jobs/{job}/unpublish', 'Api\\V1\\EmployerJobsController@unpublish');
+    $router->post('/v1/employer/jobs/{job}/archive', 'Api\\V1\\EmployerJobsController@archive');
 }, ['middleware' => ['api.auth', 'api.employer']]);
