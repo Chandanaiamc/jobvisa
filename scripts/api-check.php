@@ -73,6 +73,13 @@ $check(isset($map['GET']['/api/v1/jobs']), 'route /api/v1/jobs');
 $check(isset($map['GET']['/jobs/{job}']), 'route GET /jobs/{job}');
 $check(isset($map['GET']['/api/v1/me']), 'route /api/v1/me');
 $check(isset($map['GET']['/api/v1/employer/jobs']), 'route /api/v1/employer/jobs');
+$check(isset($map['GET']['/api/v1/employer/jobs/{job}']), 'route GET /api/v1/employer/jobs/{job}');
+$check(isset($map['POST']['/api/v1/employer/jobs']), 'route POST /api/v1/employer/jobs');
+$check(isset($map['POST']['/api/v1/employer/jobs/{job}']), 'route POST /api/v1/employer/jobs/{job}');
+$check(isset($map['POST']['/api/v1/employer/jobs/{job}/publish']), 'route POST publish job');
+$check(isset($map['POST']['/api/v1/employer/jobs/{job}/unpublish']), 'route POST unpublish job');
+$check(isset($map['POST']['/api/v1/employer/jobs/{job}/archive']), 'route POST archive job');
+$check($container->get(JobVisa\App\Domain\Job\Services\EmployerJobsService::class) instanceof JobVisa\App\Domain\Job\Services\EmployerJobsService, 'DI EmployerJobsService');
 $check(isset($map['POST']['/api/v1/tokens/{token}/revoke']), 'route POST /api/v1/tokens/{token}/revoke');
 $check(isset($map['GET']['/api/v1/docs/openapi']), 'route /api/v1/docs/openapi');
 $check(isset($map['GET']['/api/v1/resumes']), 'route /api/v1/resumes');
@@ -255,6 +262,7 @@ unset($_SERVER['REMOTE_ADDR']);
 $check((bool) config('api.webhooks_enabled', true) === false, 'webhooks disabled by default');
 
 $check(is_file($root . '/docs/05-api/api-v1-hardening.md'), 'API hardening docs present');
+$check(is_file($root . '/docs/05-api/employer-jobs-crud.md'), 'employer jobs CRUD docs present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';

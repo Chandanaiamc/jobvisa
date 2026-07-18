@@ -16,6 +16,9 @@ use JobVisa\App\Domain\Api\RateLimit\RateLimitStoreInterface;
 use JobVisa\App\Domain\Api\Webhooks\WebhookDispatcher;
 use JobVisa\App\Domain\Api\Webhooks\WebhookRepository;
 use JobVisa\App\Domain\Job\Services\PublicJobsService;
+use JobVisa\App\Domain\Job\Services\EmployerJobsService;
+use JobVisa\App\Domain\Job\Policies\JobPolicy;
+use JobVisa\App\Domain\Job\Validators\JobValidator;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
 
@@ -38,6 +41,15 @@ final class ApiServiceProvider extends ServiceProvider
             return new PublicJobsService(
                 $c->get(JobRepositoryInterface::class),
                 $c->get(LocationRepositoryInterface::class),
+            );
+        });
+        $this->container->singleton(JobPolicy::class, static fn (): JobPolicy => new JobPolicy());
+        $this->container->singleton(JobValidator::class, static fn (): JobValidator => new JobValidator());
+        $this->container->singleton(EmployerJobsService::class, static function ($c): EmployerJobsService {
+            return new EmployerJobsService(
+                $c->get(JobRepositoryInterface::class),
+                $c->get(JobPolicy::class),
+                $c->get(JobValidator::class),
             );
         });
 
