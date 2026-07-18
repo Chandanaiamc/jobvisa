@@ -60,6 +60,7 @@ $tokens = $container->get(JobVisa\App\Domain\Api\Auth\PersonalAccessTokenService
 $check($tokens instanceof JobVisa\App\Domain\Api\Auth\PersonalAccessTokenService, 'DI PersonalAccessTokenService');
 $check($container->get(JobVisa\App\Domain\Api\RateLimit\ApiRateLimiter::class) instanceof JobVisa\App\Domain\Api\RateLimit\ApiRateLimiter, 'DI ApiRateLimiter');
 $check($container->get(JobVisa\App\Domain\Api\Webhooks\WebhookDispatcher::class) instanceof JobVisa\App\Domain\Api\Webhooks\WebhookDispatcher, 'DI WebhookDispatcher');
+$check($container->get(JobVisa\App\Domain\Job\Services\PublicJobsService::class) instanceof JobVisa\App\Domain\Job\Services\PublicJobsService, 'DI PublicJobsService');
 
 $schemaReady = $container->get(JobVisa\App\Domain\Api\Auth\PersonalAccessTokenRepository::class)->ensureSchemaReady();
 $check($schemaReady, 'migration 064 schema present');
@@ -69,6 +70,7 @@ $provider->loadRoutes();
 $map = $container->get(JobVisa\App\Routing\RouteRegistrar::class)->routeMiddlewareMap();
 $check(isset($map['GET']['/api/v1/health']), 'route /api/v1/health');
 $check(isset($map['GET']['/api/v1/jobs']), 'route /api/v1/jobs');
+$check(isset($map['GET']['/jobs/{job}']), 'route GET /jobs/{job}');
 $check(isset($map['GET']['/api/v1/me']), 'route /api/v1/me');
 $check(isset($map['GET']['/api/v1/employer/jobs']), 'route /api/v1/employer/jobs');
 $check(isset($map['POST']['/api/v1/tokens/{token}/revoke']), 'route POST /api/v1/tokens/{token}/revoke');
@@ -134,6 +136,19 @@ $check(($health['json']['request_id'] ?? '') !== '' || str_contains($health['bod
 
 // JSON content type checked via body parse
 $check($health['json'] !== null, 'JSON content type / parseable');
+
+// Public jobs list (unauthenticated)
+$jobsList = $dispatch('GET', '/api/v1/jobs', [], ['page' => '1', 'per_page' => '5', 'include_filters' => '1']);
+$check($jobsList['status'] === 200, 'HTTP 200 for public jobs list');
+$check(($jobsList['json']['success'] ?? false) === true && isset($jobsList['json']['data']['jobs']), 'jobs list success envelope');
+$check(isset($jobsList['json']['meta']['pagination']['page']), 'jobs list pagination meta');
+$check(isset($jobsList['json']['meta']['filter_options']['countries']), 'jobs list filter_options when requested');
+$legacyLimit = $dispatch('GET', '/api/v1/jobs', [], ['limit' => '3']);
+$check(
+    ($legacyLimit['json']['success'] ?? false) === true
+    && (int) ($legacyLimit['json']['meta']['pagination']['per_page'] ?? 0) === 3,
+    'jobs list legacy limit alias'
+);
 
 // Raw OpenAPI docs (default)
 $docs = $dispatch('GET', '/api/v1/docs/openapi');

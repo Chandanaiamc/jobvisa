@@ -15,6 +15,9 @@ use JobVisa\App\Domain\Api\RateLimit\FileRateLimitStore;
 use JobVisa\App\Domain\Api\RateLimit\RateLimitStoreInterface;
 use JobVisa\App\Domain\Api\Webhooks\WebhookDispatcher;
 use JobVisa\App\Domain\Api\Webhooks\WebhookRepository;
+use JobVisa\App\Domain\Job\Services\PublicJobsService;
+use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
 
 /**
  * Enterprise API platform + developer portal bindings (Sprint 4.5 / 4.6).
@@ -31,6 +34,12 @@ final class ApiServiceProvider extends ServiceProvider
             return new WebhookDispatcher($c->get(WebhookRepository::class));
         });
         $this->container->singleton(DeveloperPortalService::class, static fn (): DeveloperPortalService => new DeveloperPortalService());
+        $this->container->singleton(PublicJobsService::class, static function ($c): PublicJobsService {
+            return new PublicJobsService(
+                $c->get(JobRepositoryInterface::class),
+                $c->get(LocationRepositoryInterface::class),
+            );
+        });
 
         $this->container->singleton(RateLimitStoreInterface::class, static function (): RateLimitStoreInterface {
             $driver = strtolower((string) config('api.rate_limit_driver', 'file'));

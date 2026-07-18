@@ -2,17 +2,12 @@
 
 declare(strict_types=1);
 
-/** @var string $title */
-?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= e($title) ?> | JobVisa.lk</title>
-</head>
-<body>
-    <h1><?= e($title) ?></h1>
-    <p>Browse overseas job opportunities on JobVisa.lk.</p>
-</body>
-</html>
+/** @deprecated Replaced by pages/jobs/index — kept as redirect shell if referenced. */
+$contentView = 'pages/jobs/list';
+$jobs = $jobs ?? [];
+$pagination = $pagination ?? ['page' => 1, 'per_page' => 12, 'total' => 0, 'total_pages' => 1];
+$filters = $filters ?? ['q' => '', 'country_id' => null, 'job_type_id' => null];
+$countries = $countries ?? [];
+$jobTypes = $jobTypes ?? [];
+$apiListUrl = $apiListUrl ?? (rtrim((string) app_url(''), '/') . '/api/v1/jobs');
+require base_path('app/views/layouts/public.php');

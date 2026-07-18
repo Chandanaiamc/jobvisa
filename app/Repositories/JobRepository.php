@@ -62,18 +62,121 @@ final class JobRepository extends BaseRepository implements
      */
     public function findPublished(int $limit = 50): array
     {
-        $limit = max(1, min(200, $limit));
+        $result = $this->searchPublished(['page' => 1, 'per_page' => $limit]);
 
-        return $this->fetchAll(
+        return $result['jobs'];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array{jobs: list<array<string, mixed>>, total: int, page: int, per_page: int}
+     */
+    public function searchPublished(array $filters = []): array
+    {
+        $page = max(1, (int) ($filters['page'] ?? 1));
+        $perPage = max(1, min(100, (int) ($filters['per_page'] ?? 20)));
+        $offset = ($page - 1) * $perPage;
+
+        $where = ['j.`status` = :status'];
+        $params = ['status' => 'published'];
+
+        $q = trim((string) ($filters['q'] ?? ''));
+        if ($q !== '') {
+            $q = mb_substr($q, 0, 120);
+            $ft = mb_strlen($q) >= 3 ? $this->fulltextBooleanQuery($q) : '';
+            if ($ft !== '') {
+                $where[] = 'MATCH(j.`title`, j.`description`) AGAINST (:q_ft IN BOOLEAN MODE)';
+                $params['q_ft'] = $ft;
+            } else {
+                $where[] = '(j.`title` LIKE :q_like_title OR j.`description` LIKE :q_like_desc)';
+                $like = '%' . $this->escapeLike($q) . '%';
+                $params['q_like_title'] = $like;
+                $params['q_like_desc'] = $like;
+            }
+        }
+
+        $countryId = (int) ($filters['country_id'] ?? 0);
+        if ($countryId > 0) {
+            $where[] = 'j.`country_id` = :country_id';
+            $params['country_id'] = $countryId;
+        }
+
+        $jobTypeId = (int) ($filters['job_type_id'] ?? 0);
+        if ($jobTypeId > 0) {
+            $where[] = 'j.`job_type_id` = :job_type_id';
+            $params['job_type_id'] = $jobTypeId;
+        }
+
+        $whereSql = implode(' AND ', $where);
+
+        $countRow = $this->fetchOne(
+            'SELECT COUNT(*) AS `aggregate`
+             FROM `jobs` j
+             WHERE ' . $whereSql,
+            $params
+        );
+        $total = (int) ($countRow['aggregate'] ?? 0);
+
+        $jobs = $this->fetchAll(
             'SELECT j.*, c.`name` AS country_name, jt.`name` AS job_type_name, jt.`slug` AS job_type_slug
              FROM `jobs` j
              LEFT JOIN `countries` c ON c.`id` = j.`country_id`
              LEFT JOIN `job_types` jt ON jt.`id` = j.`job_type_id`
-             WHERE j.`status` = :status
+             WHERE ' . $whereSql . '
              ORDER BY j.`published_at` DESC, j.`id` DESC
-             LIMIT ' . $limit,
-            ['status' => 'published']
+             LIMIT ' . $perPage . ' OFFSET ' . $offset,
+            $params
         );
+
+        return [
+            'jobs' => $jobs,
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+        ];
+    }
+
+    /**
+     * @return list<array{id: int, name: string, slug: string}>
+     */
+    public function listActiveJobTypes(): array
+    {
+        $rows = $this->fetchAll(
+            'SELECT `id`, `name`, `slug` FROM `job_types`
+             WHERE `is_active` = 1
+             ORDER BY `name` ASC'
+        );
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'name' => (string) ($row['name'] ?? ''),
+                'slug' => (string) ($row['slug'] ?? ''),
+            ];
+        }
+
+        return $out;
+    }
+
+    private function escapeLike(string $value): string
+    {
+        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+    }
+
+    private function fulltextBooleanQuery(string $q): string
+    {
+        $tokens = preg_split('/\s+/u', $q) ?: [];
+        $parts = [];
+        foreach ($tokens as $token) {
+            $token = preg_replace('/[^\p{L}\p{N}\-]+/u', '', $token) ?? '';
+            if ($token === '' || mb_strlen($token) < 2) {
+                continue;
+            }
+            $parts[] = '+' . $token . '*';
+        }
+
+        return $parts !== [] ? implode(' ', $parts) : '';
     }
 
     /**
