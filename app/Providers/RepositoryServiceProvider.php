@@ -13,9 +13,11 @@ use JobVisa\App\Repositories\ApplicationRepository;
 use JobVisa\App\Repositories\CompanyRepository;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface as InfrastructureApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\CompanyRepositoryInterface as InfrastructureCompanyRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\JobOfferRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface as InfrastructureJobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ScheduledInterviewRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\UserRepositoryInterface as InfrastructureUserRepositoryInterface;
+use JobVisa\App\Repositories\JobOfferRepository;
 use JobVisa\App\Repositories\JobRepository;
 use JobVisa\App\Repositories\ScheduledInterviewRepository;
 use JobVisa\App\Repositories\UserRepository;
@@ -53,6 +55,9 @@ final class RepositoryServiceProvider extends ServiceProvider
         $this->container->singleton(ScheduledInterviewRepository::class, static function ($container): ScheduledInterviewRepository {
             return new ScheduledInterviewRepository($container->get(PDO::class));
         });
+        $this->container->singleton(JobOfferRepository::class, static function ($container): JobOfferRepository {
+            return new JobOfferRepository($container->get(PDO::class));
+        });
 
         // Infrastructure contracts
         $this->container->singleton(
@@ -74,6 +79,10 @@ final class RepositoryServiceProvider extends ServiceProvider
         $this->container->singleton(
             ScheduledInterviewRepositoryInterface::class,
             static fn ($c) => $c->get(ScheduledInterviewRepository::class)
+        );
+        $this->container->singleton(
+            JobOfferRepositoryInterface::class,
+            static fn ($c) => $c->get(JobOfferRepository::class)
         );
 
         // Domain contracts (same implementations — entity findById)

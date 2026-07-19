@@ -87,6 +87,7 @@ $check(isset($map['POST']['/api/v1/employer/applications/{application}/status'])
 $check($container->get(JobVisa\App\Domain\Job\Services\EmployerJobsService::class) instanceof JobVisa\App\Domain\Job\Services\EmployerJobsService, 'DI EmployerJobsService');
 $check($container->get(JobVisa\App\Domain\Application\Services\ApplicationService::class) instanceof JobVisa\App\Domain\Application\Services\ApplicationService, 'DI ApplicationService');
 $check($container->get(JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService::class) instanceof JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService, 'DI InterviewSchedulingService');
+$check($container->get(JobVisa\App\Domain\JobOffer\Services\JobOfferService::class) instanceof JobVisa\App\Domain\JobOffer\Services\JobOfferService, 'DI JobOfferService');
 $check(isset($map['POST']['/api/v1/employer/applications/{application}/interviews']), 'route POST schedule interview');
 $check(isset($map['GET']['/api/v1/employer/interviews']), 'route GET employer interviews');
 $check(isset($map['GET']['/api/v1/interviews']), 'route GET seeker interviews');
@@ -277,8 +278,10 @@ $check(is_file($root . '/docs/05-api/api-v1-hardening.md'), 'API hardening docs 
 $check(is_file($root . '/docs/05-api/employer-jobs-crud.md'), 'employer jobs CRUD docs present');
 $check(is_file($root . '/docs/05-api/job-applications-phase1.md'), 'job applications phase1 docs present');
 $check(is_file($root . '/docs/05-api/interview-scheduling-phase1.md'), 'interview scheduling phase1 docs present');
+$check(is_file($root . '/docs/05-api/job-offers-phase1.md'), 'job offers phase1 docs present');
 $check(is_file($root . '/database/migrations/067_create_application_status_history.sql'), 'migration 067 history present');
 $check(is_file($root . '/database/migrations/068_create_scheduled_interviews.sql'), 'migration 068 scheduled interviews present');
+$check(is_file($root . '/database/migrations/069_create_job_offers.sql'), 'migration 069 job offers present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';

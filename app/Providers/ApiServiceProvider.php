@@ -25,10 +25,14 @@ use JobVisa\App\Domain\Application\Validators\ApplicationValidator;
 use JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService;
 use JobVisa\App\Domain\InterviewScheduling\Policies\InterviewSchedulingPolicy;
 use JobVisa\App\Domain\InterviewScheduling\Validators\InterviewSchedulingValidator;
+use JobVisa\App\Domain\JobOffer\Services\JobOfferService;
+use JobVisa\App\Domain\JobOffer\Policies\JobOfferPolicy;
+use JobVisa\App\Domain\JobOffer\Validators\JobOfferValidator;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ResumeRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\JobOfferRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ScheduledInterviewRepositoryInterface;
 use PDO;
 
@@ -83,6 +87,18 @@ final class ApiServiceProvider extends ServiceProvider
                 $c->get(JobRepositoryInterface::class),
                 $c->get(InterviewSchedulingPolicy::class),
                 $c->get(InterviewSchedulingValidator::class),
+                $c->get(PDO::class),
+            );
+        });
+        $this->container->singleton(JobOfferPolicy::class, static fn (): JobOfferPolicy => new JobOfferPolicy());
+        $this->container->singleton(JobOfferValidator::class, static fn (): JobOfferValidator => new JobOfferValidator());
+        $this->container->singleton(JobOfferService::class, static function ($c): JobOfferService {
+            return new JobOfferService(
+                $c->get(JobOfferRepositoryInterface::class),
+                $c->get(ApplicationRepositoryInterface::class),
+                $c->get(JobRepositoryInterface::class),
+                $c->get(JobOfferPolicy::class),
+                $c->get(JobOfferValidator::class),
                 $c->get(PDO::class),
             );
         });
