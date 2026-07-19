@@ -86,6 +86,12 @@ $check(isset($map['GET']['/api/v1/employer/applications/{application}']), 'route
 $check(isset($map['POST']['/api/v1/employer/applications/{application}/status']), 'route POST employer application status');
 $check($container->get(JobVisa\App\Domain\Job\Services\EmployerJobsService::class) instanceof JobVisa\App\Domain\Job\Services\EmployerJobsService, 'DI EmployerJobsService');
 $check($container->get(JobVisa\App\Domain\Application\Services\ApplicationService::class) instanceof JobVisa\App\Domain\Application\Services\ApplicationService, 'DI ApplicationService');
+$check($container->get(JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService::class) instanceof JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService, 'DI InterviewSchedulingService');
+$check(isset($map['POST']['/api/v1/employer/applications/{application}/interviews']), 'route POST schedule interview');
+$check(isset($map['GET']['/api/v1/employer/interviews']), 'route GET employer interviews');
+$check(isset($map['GET']['/api/v1/interviews']), 'route GET seeker interviews');
+$check(isset($map['POST']['/api/v1/interviews/{interview}/confirm']), 'route POST confirm interview');
+$check(isset($map['POST']['/api/v1/employer/interviews/{interview}/cancel']), 'route POST cancel interview');
 $check(isset($map['POST']['/api/v1/tokens/{token}/revoke']), 'route POST /api/v1/tokens/{token}/revoke');
 $check(isset($map['GET']['/api/v1/docs/openapi']), 'route /api/v1/docs/openapi');
 $check(isset($map['GET']['/api/v1/resumes']), 'route /api/v1/resumes');
@@ -270,7 +276,9 @@ $check((bool) config('api.webhooks_enabled', true) === false, 'webhooks disabled
 $check(is_file($root . '/docs/05-api/api-v1-hardening.md'), 'API hardening docs present');
 $check(is_file($root . '/docs/05-api/employer-jobs-crud.md'), 'employer jobs CRUD docs present');
 $check(is_file($root . '/docs/05-api/job-applications-phase1.md'), 'job applications phase1 docs present');
+$check(is_file($root . '/docs/05-api/interview-scheduling-phase1.md'), 'interview scheduling phase1 docs present');
 $check(is_file($root . '/database/migrations/067_create_application_status_history.sql'), 'migration 067 history present');
+$check(is_file($root . '/database/migrations/068_create_scheduled_interviews.sql'), 'migration 068 scheduled interviews present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';
