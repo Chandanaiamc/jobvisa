@@ -22,10 +22,14 @@ use JobVisa\App\Domain\Job\Validators\JobValidator;
 use JobVisa\App\Domain\Application\Services\ApplicationService;
 use JobVisa\App\Domain\Application\Policies\ApplicationPolicy;
 use JobVisa\App\Domain\Application\Validators\ApplicationValidator;
+use JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService;
+use JobVisa\App\Domain\InterviewScheduling\Policies\InterviewSchedulingPolicy;
+use JobVisa\App\Domain\InterviewScheduling\Validators\InterviewSchedulingValidator;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ResumeRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\ScheduledInterviewRepositoryInterface;
 use PDO;
 
 /**
@@ -67,6 +71,18 @@ final class ApiServiceProvider extends ServiceProvider
                 $c->get(ResumeRepositoryInterface::class),
                 $c->get(ApplicationPolicy::class),
                 $c->get(ApplicationValidator::class),
+                $c->get(PDO::class),
+            );
+        });
+        $this->container->singleton(InterviewSchedulingPolicy::class, static fn (): InterviewSchedulingPolicy => new InterviewSchedulingPolicy());
+        $this->container->singleton(InterviewSchedulingValidator::class, static fn (): InterviewSchedulingValidator => new InterviewSchedulingValidator());
+        $this->container->singleton(InterviewSchedulingService::class, static function ($c): InterviewSchedulingService {
+            return new InterviewSchedulingService(
+                $c->get(ScheduledInterviewRepositoryInterface::class),
+                $c->get(ApplicationRepositoryInterface::class),
+                $c->get(JobRepositoryInterface::class),
+                $c->get(InterviewSchedulingPolicy::class),
+                $c->get(InterviewSchedulingValidator::class),
                 $c->get(PDO::class),
             );
         });

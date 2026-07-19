@@ -56,9 +56,13 @@ $router->group('api.v1.jobseeker', static function ($router): void {
         '/v1/jobs/{job}/match' => 'Api\\V1\\JobMatchController@show',
         '/v1/applications' => 'Api\\V1\\ApplicationsController@index',
         '/v1/applications/{application}' => 'Api\\V1\\ApplicationsController@show',
+        '/v1/interviews' => 'Api\\V1\\InterviewsController@index',
+        '/v1/interviews/{interview}' => 'Api\\V1\\InterviewsController@show',
     ]);
     $router->post('/v1/jobs/{job}/applications', 'Api\\V1\\ApplicationsController@store');
     $router->post('/v1/applications/{application}/withdraw', 'Api\\V1\\ApplicationsController@withdraw');
+    $router->post('/v1/interviews/{interview}/confirm', 'Api\\V1\\InterviewsController@confirm');
+    $router->post('/v1/interviews/{interview}/decline', 'Api\\V1\\InterviewsController@decline');
 }, ['middleware' => ['api.auth', 'api.jobseeker']]);
 
 // Employer v1
@@ -69,6 +73,8 @@ $router->group('api.v1.employer', static function ($router): void {
         '/v1/employer/jobs/{job}/applicants' => 'Api\\V1\\EmployerJobsController@applicants',
         '/v1/employer/jobs/{job}/ranking' => 'Api\\V1\\EmployerJobsController@ranking',
         '/v1/employer/applications/{application}' => 'Api\\V1\\EmployerApplicationsController@show',
+        '/v1/employer/interviews' => 'Api\\V1\\EmployerInterviewsController@index',
+        '/v1/employer/interviews/{interview}' => 'Api\\V1\\EmployerInterviewsController@show',
     ]);
     $router->post('/v1/employer/jobs', 'Api\\V1\\EmployerJobsController@store');
     $router->post('/v1/employer/jobs/{job}', 'Api\\V1\\EmployerJobsController@update');
@@ -76,4 +82,8 @@ $router->group('api.v1.employer', static function ($router): void {
     $router->post('/v1/employer/jobs/{job}/unpublish', 'Api\\V1\\EmployerJobsController@unpublish');
     $router->post('/v1/employer/jobs/{job}/archive', 'Api\\V1\\EmployerJobsController@archive');
     $router->post('/v1/employer/applications/{application}/status', 'Api\\V1\\EmployerApplicationsController@updateStatus');
+    $router->post('/v1/employer/applications/{application}/interviews', 'Api\\V1\\EmployerInterviewsController@store');
+    $router->post('/v1/employer/interviews/{interview}/reschedule', 'Api\\V1\\EmployerInterviewsController@reschedule');
+    $router->post('/v1/employer/interviews/{interview}/cancel', 'Api\\V1\\EmployerInterviewsController@cancel');
+    $router->post('/v1/employer/interviews/{interview}/complete', 'Api\\V1\\EmployerInterviewsController@complete');
 }, ['middleware' => ['api.auth', 'api.employer']]);

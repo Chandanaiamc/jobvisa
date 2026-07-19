@@ -180,4 +180,55 @@ final class ApiResource
             'created_at' => $token['created_at'] ?? null,
         ];
     }
+
+    /**
+     * Scheduled interview payload. Times stored UTC; local wall time derived from timezone.
+     *
+     * @param  array<string, mixed>  $row
+     * @param  \JobVisa\App\Domain\InterviewScheduling\Validators\InterviewSchedulingValidator|null  $validator
+     * @return array<string, mixed>
+     */
+    public static function scheduledInterview(
+        array $row,
+        bool $detailed = false,
+        mixed $validator = null
+    ): array {
+        $timezone = (string) ($row['timezone'] ?? 'UTC');
+        $utcRaw = (string) ($row['scheduled_at_utc'] ?? '');
+        $scheduledLocal = null;
+        if ($utcRaw !== '' && $validator instanceof \JobVisa\App\Domain\InterviewScheduling\Validators\InterviewSchedulingValidator) {
+            $utc = $validator->parseToUtc($utcRaw, 'UTC', true);
+            if ($utc !== null) {
+                $scheduledLocal = $validator->formatLocal($utc, $timezone);
+            }
+        }
+
+        $base = [
+            'id' => (int) ($row['id'] ?? 0),
+            'application_id' => isset($row['application_id']) ? (int) $row['application_id'] : null,
+            'job_id' => isset($row['job_id']) ? (int) $row['job_id'] : null,
+            'job_title' => (string) ($row['job_title'] ?? ''),
+            'status' => (string) ($row['status'] ?? ''),
+            'scheduled_at_utc' => $utcRaw !== '' ? $utcRaw : null,
+            'scheduled_at_local' => $scheduledLocal,
+            'timezone' => $timezone,
+            'duration_minutes' => isset($row['duration_minutes']) ? (int) $row['duration_minutes'] : null,
+            'location_type' => (string) ($row['location_type'] ?? 'other'),
+            'round_number' => isset($row['round_number']) ? (int) $row['round_number'] : null,
+            'application_status' => (string) ($row['application_status'] ?? ''),
+        ];
+
+        if ($detailed) {
+            $base['location_notes'] = isset($row['location_notes']) ? (string) $row['location_notes'] : null;
+            $base['candidate_user_id'] = isset($row['candidate_user_id']) ? (int) $row['candidate_user_id'] : null;
+            $base['employer_user_id'] = isset($row['employer_user_id']) ? (int) $row['employer_user_id'] : null;
+            $base['candidate_name'] = (string) ($row['candidate_name'] ?? '');
+            $base['cancelled_at'] = $row['cancelled_at'] ?? null;
+            $base['completed_at'] = $row['completed_at'] ?? null;
+            $base['created_at'] = $row['created_at'] ?? null;
+            $base['updated_at'] = $row['updated_at'] ?? null;
+        }
+
+        return $base;
+    }
 }
