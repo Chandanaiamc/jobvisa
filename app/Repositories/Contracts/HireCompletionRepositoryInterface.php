@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace JobVisa\App\Repositories\Contracts;
 
-interface ScheduledInterviewRepositoryInterface
+interface HireCompletionRepositoryInterface
 {
     /**
      * @return array<string, mixed>|null
@@ -17,11 +17,14 @@ interface ScheduledInterviewRepositoryInterface
     public function findDetailedById(int $id): ?array;
 
     /**
-     * Active = proposed|confirmed.
-     *
      * @return array<string, mixed>|null
      */
-    public function findActiveByApplicationId(int $applicationId): ?array;
+    public function findByApplicationId(int $applicationId): ?array;
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function findByOfferId(int $offerId): ?array;
 
     /**
      * @return list<array<string, mixed>>
@@ -32,6 +35,8 @@ interface ScheduledInterviewRepositoryInterface
      * @return list<array<string, mixed>>
      */
     public function listForCandidateUser(int $candidateUserId, int $limit = 100): array;
+
+    public function countCompletedByJobId(int $jobId): int;
 
     /**
      * @param  array<string, mixed>  $data
@@ -44,17 +49,10 @@ interface ScheduledInterviewRepositoryInterface
     public function updateById(int $id, array $fields): bool;
 
     public function insertHistory(
-        int $interviewId,
+        int $hireCompletionId,
         ?string $fromStatus,
         string $toStatus,
         ?int $actorUserId,
         ?string $note = null
     ): void;
-
-    /**
-     * Soft-cancel all proposed|confirmed interviews for an application.
-     *
-     * @return int number of interviews cancelled
-     */
-    public function cancelActiveByApplicationId(int $applicationId, ?int $actorUserId, ?string $note = null): int;
 }

@@ -60,6 +60,8 @@ $router->group('api.v1.jobseeker', static function ($router): void {
         '/v1/interviews/{interview}' => 'Api\\V1\\InterviewsController@show',
         '/v1/offers' => 'Api\\V1\\OffersController@index',
         '/v1/offers/{offer}' => 'Api\\V1\\OffersController@show',
+        '/v1/hire-completions' => 'Api\\V1\\HireCompletionsController@index',
+        '/v1/hire-completions/{hire}' => 'Api\\V1\\HireCompletionsController@show',
     ]);
     $router->post('/v1/jobs/{job}/applications', 'Api\\V1\\ApplicationsController@store');
     $router->post('/v1/applications/{application}/withdraw', 'Api\\V1\\ApplicationsController@withdraw');
@@ -81,6 +83,8 @@ $router->group('api.v1.employer', static function ($router): void {
         '/v1/employer/interviews/{interview}' => 'Api\\V1\\EmployerInterviewsController@show',
         '/v1/employer/offers' => 'Api\\V1\\EmployerOffersController@index',
         '/v1/employer/offers/{offer}' => 'Api\\V1\\EmployerOffersController@show',
+        '/v1/employer/hire-completions' => 'Api\\V1\\EmployerHireCompletionsController@index',
+        '/v1/employer/hire-completions/{hire}' => 'Api\\V1\\EmployerHireCompletionsController@show',
     ]);
     $router->post('/v1/employer/jobs', 'Api\\V1\\EmployerJobsController@store');
     $router->post('/v1/employer/jobs/{job}', 'Api\\V1\\EmployerJobsController@update');
@@ -96,4 +100,7 @@ $router->group('api.v1.employer', static function ($router): void {
     $router->post('/v1/employer/offers/{offer}/send', 'Api\\V1\\EmployerOffersController@send');
     $router->post('/v1/employer/offers/{offer}/withdraw', 'Api\\V1\\EmployerOffersController@withdraw');
     $router->post('/v1/employer/offers/{offer}/expire', 'Api\\V1\\EmployerOffersController@expire');
+    $router->post('/v1/employer/hire-completions/{hire}/confirm', 'Api\\V1\\EmployerHireCompletionsController@confirm');
+    $router->post('/v1/employer/hire-completions/{hire}/complete', 'Api\\V1\\EmployerHireCompletionsController@complete');
+    $router->post('/v1/employer/hire-completions/{hire}/cancel', 'Api\\V1\\EmployerHireCompletionsController@cancel');
 }, ['middleware' => ['api.auth', 'api.employer']]);

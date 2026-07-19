@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace JobVisa\App\Domain\JobOffer\Services;
 
 use JobVisa\App\Domain\Api\Resources\ApiResource;
+use JobVisa\App\Domain\HiringCompletion\Exceptions\HiringCompletionException;
+use JobVisa\App\Domain\HiringCompletion\Services\HiringCompletionService;
+use JobVisa\App\Domain\HiringCompletion\Validators\HiringCompletionValidator;
 use JobVisa\App\Domain\JobOffer\Exceptions\JobOfferException;
 use JobVisa\App\Domain\JobOffer\Policies\JobOfferPolicy;
 use JobVisa\App\Domain\JobOffer\Validators\JobOfferValidator;
@@ -25,6 +28,8 @@ final class JobOfferService
         private readonly JobRepositoryInterface $jobs,
         private readonly JobOfferPolicy $policy,
         private readonly JobOfferValidator $validator,
+        private readonly HiringCompletionService $hiringCompletions,
+        private readonly HiringCompletionValidator $hireCompletionValidator,
         private readonly PDO $pdo,
     ) {
     }
@@ -322,8 +327,25 @@ final class JobOfferService
             if ($to === 'accepted') {
                 $appId = (int) ($row['application_id'] ?? 0);
                 $app = $this->applications->findDetailedRecordById($appId);
+                if ($app === null) {
+                    $this->pdo->rollBack();
+
+                    return [
+                        'success' => false,
+                        'message' => JobOfferException::notFound()->getMessage(),
+                    ];
+                }
                 $appFrom = (string) ($app['status'] ?? '');
-                if ($app !== null && $appFrom !== 'hired') {
+                if (!$this->hireCompletionValidator->isHireableApplicationStatus($appFrom)) {
+                    $this->pdo->rollBack();
+
+                    return [
+                        'success' => false,
+                        'message' => HiringCompletionException::applicationNotHireable($appFrom)->getMessage(),
+                        'errors' => ['application' => [HiringCompletionException::applicationNotHireable($appFrom)->getMessage()]],
+                    ];
+                }
+                if ($appFrom !== 'hired') {
                     $this->applications->updateApplicationStatus($appId, 'hired', null);
                     $this->applications->insertStatusHistory(
                         $appId,
@@ -332,7 +354,14 @@ final class JobOfferService
                         (int) ($actor['id'] ?? 0),
                         'Hired via accepted job offer'
                     );
+                    $app['status'] = 'hired';
                 }
+
+                $this->hiringCompletions->ensurePendingFromOfferAccept(
+                    $app,
+                    array_merge($row, ['id' => $offerId, 'status' => 'accepted']),
+                    (int) ($actor['id'] ?? 0)
+                );
             }
 
             $this->pdo->commit();

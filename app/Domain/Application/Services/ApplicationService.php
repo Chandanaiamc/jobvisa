@@ -8,6 +8,7 @@ use JobVisa\App\Domain\Api\Resources\ApiResource;
 use JobVisa\App\Domain\Application\Exceptions\ApplicationException;
 use JobVisa\App\Domain\Application\Policies\ApplicationPolicy;
 use JobVisa\App\Domain\Application\Validators\ApplicationValidator;
+use JobVisa\App\Domain\HiringCompletion\Services\HiringCompletionService;
 use JobVisa\App\Domain\Support\AbstractDomainService;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
@@ -27,6 +28,7 @@ final class ApplicationService extends AbstractDomainService
         private readonly ResumeRepositoryInterface $resumes,
         private readonly ApplicationPolicy $policy,
         private readonly ApplicationValidator $validator,
+        private readonly HiringCompletionService $hiringCompletions,
         private readonly PDO $pdo,
     ) {
     }
@@ -307,6 +309,13 @@ final class ApplicationService extends AbstractDomainService
                 (int) ($actor['id'] ?? 0),
                 $notes
             );
+            if ($to === 'hired') {
+                $updatedForHire = array_merge($row, ['status' => 'hired']);
+                $this->hiringCompletions->ensurePendingFromEmployerHire(
+                    $updatedForHire,
+                    (int) ($actor['id'] ?? 0)
+                );
+            }
             $this->pdo->commit();
         } catch (Throwable $e) {
             if ($this->pdo->inTransaction()) {

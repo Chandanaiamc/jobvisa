@@ -75,4 +75,6 @@ interface ApplicationRepositoryInterface extends RepositoryInterface
      * @return array<string, int> status => count
      */
     public function countByStatusForJobIds(array $jobIds): array;
+
+    public function countHiredByJobId(int $jobId): int;
 }

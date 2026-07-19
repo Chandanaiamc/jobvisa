@@ -160,6 +160,13 @@ final class DeveloperPortalService
             ['group' => 'JobSeeker', 'method' => 'GET', 'path' => '/offers/{offer}', 'auth' => true, 'summary' => 'Offer detail'],
             ['group' => 'JobSeeker', 'method' => 'POST', 'path' => '/offers/{offer}/accept', 'auth' => true, 'summary' => 'Accept offer'],
             ['group' => 'JobSeeker', 'method' => 'POST', 'path' => '/offers/{offer}/decline', 'auth' => true, 'summary' => 'Decline offer'],
+            ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/hire-completions', 'auth' => true, 'summary' => 'List hire completions'],
+            ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/hire-completions/{hire}', 'auth' => true, 'summary' => 'Hire completion detail'],
+            ['group' => 'Employer', 'method' => 'POST', 'path' => '/employer/hire-completions/{hire}/confirm', 'auth' => true, 'summary' => 'Confirm hire'],
+            ['group' => 'Employer', 'method' => 'POST', 'path' => '/employer/hire-completions/{hire}/complete', 'auth' => true, 'summary' => 'Complete hire'],
+            ['group' => 'Employer', 'method' => 'POST', 'path' => '/employer/hire-completions/{hire}/cancel', 'auth' => true, 'summary' => 'Cancel hire completion'],
+            ['group' => 'JobSeeker', 'method' => 'GET', 'path' => '/hire-completions', 'auth' => true, 'summary' => 'My hire completions'],
+            ['group' => 'JobSeeker', 'method' => 'GET', 'path' => '/hire-completions/{hire}', 'auth' => true, 'summary' => 'Hire completion detail'],
             ['group' => 'Employer', 'method' => 'GET', 'path' => '/employer/jobs/{job}/ranking', 'auth' => true, 'summary' => 'Applicant ranking'],
             ['group' => 'Portal', 'method' => 'GET', 'path' => '/portal', 'auth' => false, 'summary' => 'Developer portal status'],
         ];

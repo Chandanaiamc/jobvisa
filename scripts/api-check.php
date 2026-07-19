@@ -88,6 +88,7 @@ $check($container->get(JobVisa\App\Domain\Job\Services\EmployerJobsService::clas
 $check($container->get(JobVisa\App\Domain\Application\Services\ApplicationService::class) instanceof JobVisa\App\Domain\Application\Services\ApplicationService, 'DI ApplicationService');
 $check($container->get(JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService::class) instanceof JobVisa\App\Domain\InterviewScheduling\Services\InterviewSchedulingService, 'DI InterviewSchedulingService');
 $check($container->get(JobVisa\App\Domain\JobOffer\Services\JobOfferService::class) instanceof JobVisa\App\Domain\JobOffer\Services\JobOfferService, 'DI JobOfferService');
+$check($container->get(JobVisa\App\Domain\HiringCompletion\Services\HiringCompletionService::class) instanceof JobVisa\App\Domain\HiringCompletion\Services\HiringCompletionService, 'DI HiringCompletionService');
 $check(isset($map['POST']['/api/v1/employer/applications/{application}/interviews']), 'route POST schedule interview');
 $check(isset($map['GET']['/api/v1/employer/interviews']), 'route GET employer interviews');
 $check(isset($map['GET']['/api/v1/interviews']), 'route GET seeker interviews');
@@ -279,9 +280,11 @@ $check(is_file($root . '/docs/05-api/employer-jobs-crud.md'), 'employer jobs CRU
 $check(is_file($root . '/docs/05-api/job-applications-phase1.md'), 'job applications phase1 docs present');
 $check(is_file($root . '/docs/05-api/interview-scheduling-phase1.md'), 'interview scheduling phase1 docs present');
 $check(is_file($root . '/docs/05-api/job-offers-phase1.md'), 'job offers phase1 docs present');
+$check(is_file($root . '/docs/05-api/hiring-completion-phase1.md'), 'hiring completion phase1 docs present');
 $check(is_file($root . '/database/migrations/067_create_application_status_history.sql'), 'migration 067 history present');
 $check(is_file($root . '/database/migrations/068_create_scheduled_interviews.sql'), 'migration 068 scheduled interviews present');
 $check(is_file($root . '/database/migrations/069_create_job_offers.sql'), 'migration 069 job offers present');
+$check(is_file($root . '/database/migrations/070_create_hire_completions.sql'), 'migration 070 hire completions present');
 
 // CSRF preserved for web
 $_SERVER['REQUEST_METHOD'] = 'POST';

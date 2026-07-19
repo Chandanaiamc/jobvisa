@@ -13,10 +13,12 @@ use JobVisa\App\Repositories\ApplicationRepository;
 use JobVisa\App\Repositories\CompanyRepository;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface as InfrastructureApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\CompanyRepositoryInterface as InfrastructureCompanyRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\HireCompletionRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobOfferRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface as InfrastructureJobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ScheduledInterviewRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\UserRepositoryInterface as InfrastructureUserRepositoryInterface;
+use JobVisa\App\Repositories\HireCompletionRepository;
 use JobVisa\App\Repositories\JobOfferRepository;
 use JobVisa\App\Repositories\JobRepository;
 use JobVisa\App\Repositories\ScheduledInterviewRepository;
@@ -58,6 +60,9 @@ final class RepositoryServiceProvider extends ServiceProvider
         $this->container->singleton(JobOfferRepository::class, static function ($container): JobOfferRepository {
             return new JobOfferRepository($container->get(PDO::class));
         });
+        $this->container->singleton(HireCompletionRepository::class, static function ($container): HireCompletionRepository {
+            return new HireCompletionRepository($container->get(PDO::class));
+        });
 
         // Infrastructure contracts
         $this->container->singleton(
@@ -83,6 +88,10 @@ final class RepositoryServiceProvider extends ServiceProvider
         $this->container->singleton(
             JobOfferRepositoryInterface::class,
             static fn ($c) => $c->get(JobOfferRepository::class)
+        );
+        $this->container->singleton(
+            HireCompletionRepositoryInterface::class,
+            static fn ($c) => $c->get(HireCompletionRepository::class)
         );
 
         // Domain contracts (same implementations — entity findById)
