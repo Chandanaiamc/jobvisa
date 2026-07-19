@@ -231,4 +231,41 @@ final class ApiResource
 
         return $base;
     }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    public static function jobOffer(array $row, bool $detailed = false): array
+    {
+        $base = [
+            'id' => (int) ($row['id'] ?? 0),
+            'application_id' => isset($row['application_id']) ? (int) $row['application_id'] : null,
+            'job_id' => isset($row['job_id']) ? (int) $row['job_id'] : null,
+            'job_title' => (string) ($row['job_title'] ?? ''),
+            'status' => (string) ($row['status'] ?? ''),
+            'salary_amount' => isset($row['salary_amount']) ? (string) $row['salary_amount'] : null,
+            'salary_currency' => (string) ($row['salary_currency'] ?? 'LKR'),
+            'pay_period' => (string) ($row['pay_period'] ?? 'monthly'),
+            'start_date' => $row['start_date'] ?? null,
+            'expires_at_utc' => $row['expires_at_utc'] ?? null,
+            'application_status' => (string) ($row['application_status'] ?? ''),
+        ];
+
+        if ($detailed) {
+            $base['notes'] = isset($row['notes']) ? (string) $row['notes'] : null;
+            $base['candidate_user_id'] = isset($row['candidate_user_id']) ? (int) $row['candidate_user_id'] : null;
+            $base['employer_user_id'] = isset($row['employer_user_id']) ? (int) $row['employer_user_id'] : null;
+            $base['candidate_name'] = (string) ($row['candidate_name'] ?? '');
+            $base['sent_at'] = $row['sent_at'] ?? null;
+            $base['accepted_at'] = $row['accepted_at'] ?? null;
+            $base['declined_at'] = $row['declined_at'] ?? null;
+            $base['withdrawn_at'] = $row['withdrawn_at'] ?? null;
+            $base['expired_at'] = $row['expired_at'] ?? null;
+            $base['created_at'] = $row['created_at'] ?? null;
+            $base['updated_at'] = $row['updated_at'] ?? null;
+        }
+
+        return $base;
+    }
 }

@@ -379,6 +379,104 @@
         "responses": { "200": { "description": "OK" } }
       }
     },
+    "/employer/applications/{application}/offers": {
+      "post": {
+        "summary": "Draft job offer for shortlisted application",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "application", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "201": { "description": "Created" },
+          "409": { "description": "Active offer exists" },
+          "422": { "description": "Not shortlisted / validation" }
+        }
+      }
+    },
+    "/employer/offers": {
+      "get": {
+        "summary": "List employer offers",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/offers/{offer}": {
+      "get": {
+        "summary": "Get employer offer",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/employer/offers/{offer}/send": {
+      "post": {
+        "summary": "Send drafted offer to candidate",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Invalid status" } }
+      }
+    },
+    "/employer/offers/{offer}/withdraw": {
+      "post": {
+        "summary": "Withdraw draft or sent offer (soft)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/offers/{offer}/expire": {
+      "post": {
+        "summary": "Mark sent offer as expired",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Must be sent" } }
+      }
+    },
+    "/offers": {
+      "get": {
+        "summary": "List own offers (seeker)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/offers/{offer}": {
+      "get": {
+        "summary": "Get own offer (seeker)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/offers/{offer}/accept": {
+      "post": {
+        "summary": "Accept sent offer (sets application hired)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Expired / invalid" } }
+      }
+    },
+    "/offers/{offer}/decline": {
+      "post": {
+        "summary": "Decline sent offer",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "offer", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
     "/employer/jobs/{job}/ranking": {
       "get": {
         "summary": "Applicant ranking for owned job",
