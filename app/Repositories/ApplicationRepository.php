@@ -351,6 +351,20 @@ final class ApplicationRepository extends BaseRepository implements
         return $out;
     }
 
+    public function countHiredByJobId(int $jobId): int
+    {
+        if ($jobId < 1) {
+            return 0;
+        }
+        $row = $this->fetchOne(
+            'SELECT COUNT(*) AS `cnt` FROM `applications`
+             WHERE `job_id` = :job_id AND `status` = \'hired\'',
+            ['job_id' => $jobId]
+        );
+
+        return (int) ($row['cnt'] ?? 0);
+    }
+
     public function exists(int|string $id): bool
     {
         if ((int) $id < 1) {

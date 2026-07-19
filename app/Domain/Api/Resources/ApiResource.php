@@ -268,4 +268,38 @@ final class ApiResource
 
         return $base;
     }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    public static function hireCompletion(array $row, bool $detailed = false): array
+    {
+        $base = [
+            'id' => (int) ($row['id'] ?? 0),
+            'application_id' => isset($row['application_id']) ? (int) $row['application_id'] : null,
+            'job_id' => isset($row['job_id']) ? (int) $row['job_id'] : null,
+            'job_title' => (string) ($row['job_title'] ?? ''),
+            'offer_id' => isset($row['offer_id']) && (int) $row['offer_id'] > 0 ? (int) $row['offer_id'] : null,
+            'status' => (string) ($row['status'] ?? ''),
+            'start_date' => $row['start_date'] ?? null,
+            'application_status' => (string) ($row['application_status'] ?? ''),
+        ];
+
+        if ($detailed) {
+            $base['notes'] = isset($row['notes']) ? (string) $row['notes'] : null;
+            $base['candidate_user_id'] = isset($row['candidate_user_id']) ? (int) $row['candidate_user_id'] : null;
+            $base['employer_user_id'] = isset($row['employer_user_id']) ? (int) $row['employer_user_id'] : null;
+            $base['candidate_name'] = (string) ($row['candidate_name'] ?? '');
+            $base['job_status'] = (string) ($row['job_status'] ?? '');
+            $base['job_vacancies'] = isset($row['job_vacancies']) ? (int) $row['job_vacancies'] : null;
+            $base['confirmed_at'] = $row['confirmed_at'] ?? null;
+            $base['completed_at'] = $row['completed_at'] ?? null;
+            $base['cancelled_at'] = $row['cancelled_at'] ?? null;
+            $base['created_at'] = $row['created_at'] ?? null;
+            $base['updated_at'] = $row['updated_at'] ?? null;
+        }
+
+        return $base;
+    }
 }

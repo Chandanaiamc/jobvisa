@@ -28,10 +28,14 @@ use JobVisa\App\Domain\InterviewScheduling\Validators\InterviewSchedulingValidat
 use JobVisa\App\Domain\JobOffer\Services\JobOfferService;
 use JobVisa\App\Domain\JobOffer\Policies\JobOfferPolicy;
 use JobVisa\App\Domain\JobOffer\Validators\JobOfferValidator;
+use JobVisa\App\Domain\HiringCompletion\Services\HiringCompletionService;
+use JobVisa\App\Domain\HiringCompletion\Policies\HiringCompletionPolicy;
+use JobVisa\App\Domain\HiringCompletion\Validators\HiringCompletionValidator;
 use JobVisa\App\Repositories\Contracts\ApplicationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\LocationRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ResumeRepositoryInterface;
+use JobVisa\App\Repositories\Contracts\HireCompletionRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\JobOfferRepositoryInterface;
 use JobVisa\App\Repositories\Contracts\ScheduledInterviewRepositoryInterface;
 use PDO;
@@ -68,6 +72,19 @@ final class ApiServiceProvider extends ServiceProvider
         });
         $this->container->singleton(ApplicationPolicy::class, static fn (): ApplicationPolicy => new ApplicationPolicy());
         $this->container->singleton(ApplicationValidator::class, static fn (): ApplicationValidator => new ApplicationValidator());
+        $this->container->singleton(HiringCompletionPolicy::class, static fn (): HiringCompletionPolicy => new HiringCompletionPolicy());
+        $this->container->singleton(HiringCompletionValidator::class, static fn (): HiringCompletionValidator => new HiringCompletionValidator());
+        $this->container->singleton(HiringCompletionService::class, static function ($c): HiringCompletionService {
+            return new HiringCompletionService(
+                $c->get(HireCompletionRepositoryInterface::class),
+                $c->get(ApplicationRepositoryInterface::class),
+                $c->get(JobRepositoryInterface::class),
+                $c->get(ScheduledInterviewRepositoryInterface::class),
+                $c->get(HiringCompletionPolicy::class),
+                $c->get(HiringCompletionValidator::class),
+                $c->get(PDO::class),
+            );
+        });
         $this->container->singleton(ApplicationService::class, static function ($c): ApplicationService {
             return new ApplicationService(
                 $c->get(ApplicationRepositoryInterface::class),
@@ -75,6 +92,7 @@ final class ApiServiceProvider extends ServiceProvider
                 $c->get(ResumeRepositoryInterface::class),
                 $c->get(ApplicationPolicy::class),
                 $c->get(ApplicationValidator::class),
+                $c->get(HiringCompletionService::class),
                 $c->get(PDO::class),
             );
         });
@@ -99,6 +117,8 @@ final class ApiServiceProvider extends ServiceProvider
                 $c->get(JobRepositoryInterface::class),
                 $c->get(JobOfferPolicy::class),
                 $c->get(JobOfferValidator::class),
+                $c->get(HiringCompletionService::class),
+                $c->get(HiringCompletionValidator::class),
                 $c->get(PDO::class),
             );
         });

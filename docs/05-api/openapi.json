@@ -477,6 +477,70 @@
         "responses": { "200": { "description": "OK" } }
       }
     },
+    "/employer/hire-completions": {
+      "get": {
+        "summary": "List employer hire completions",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/employer/hire-completions/{hire}": {
+      "get": {
+        "summary": "Get employer hire completion",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "hire", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
+    "/employer/hire-completions/{hire}/confirm": {
+      "post": {
+        "summary": "Confirm pending hire",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "hire", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Invalid status" } }
+      }
+    },
+    "/employer/hire-completions/{hire}/complete": {
+      "post": {
+        "summary": "Complete confirmed hire (may close job when filled)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "hire", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "422": { "description": "Must be confirmed" } }
+      }
+    },
+    "/employer/hire-completions/{hire}/cancel": {
+      "post": {
+        "summary": "Cancel pending or confirmed hire completion",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "hire", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/hire-completions": {
+      "get": {
+        "summary": "List own hire completions (seeker)",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "OK" } }
+      }
+    },
+    "/hire-completions/{hire}": {
+      "get": {
+        "summary": "Get own hire completion (seeker)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "hire", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "OK" }, "404": { "description": "Not found" } }
+      }
+    },
     "/employer/jobs/{job}/ranking": {
       "get": {
         "summary": "Applicant ranking for owned job",

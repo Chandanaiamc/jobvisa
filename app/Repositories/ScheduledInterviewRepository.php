@@ -207,4 +207,43 @@ final class ScheduledInterviewRepository extends BaseRepository implements Sched
             ]
         );
     }
+
+    public function cancelActiveByApplicationId(int $applicationId, ?int $actorUserId, ?string $note = null): int
+    {
+        if ($applicationId < 1) {
+            return 0;
+        }
+        $rows = $this->fetchAll(
+            'SELECT `id`, `status` FROM `scheduled_interviews`
+             WHERE `application_id` = :application_id
+               AND `status` IN (\'proposed\', \'confirmed\')',
+            ['application_id' => $applicationId]
+        );
+        if ($rows === []) {
+            return 0;
+        }
+        $cancelledAt = gmdate('Y-m-d H:i:s.v');
+        $count = 0;
+        foreach ($rows as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            $from = (string) ($row['status'] ?? '');
+            if ($id < 1) {
+                continue;
+            }
+            $this->updateById($id, [
+                'status' => 'cancelled',
+                'cancelled_at' => $cancelledAt,
+            ]);
+            $this->insertHistory(
+                $id,
+                $from,
+                'cancelled',
+                $actorUserId,
+                $note ?? 'Cancelled due to hire completion'
+            );
+            $count++;
+        }
+
+        return $count;
+    }
 }
